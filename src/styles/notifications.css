@@ -1,0 +1,83 @@
+.notification-container {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 1000;
+}
+
+.notification {
+  min-width: 300px;
+  max-width: 400px;
+  padding: 15px;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.notification-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.notification-message {
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.notification-close {
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 0;
+  margin-left: 10px;
+  color: inherit;
+}
+
+/* Info Notification */
+.notification.info {
+  background-color: #e3f2fd;
+  color: #1976d2;
+}
+
+/* Error Notification */
+.notification.error {
+  background-color: #ffebee;
+  color: #d32f2f;
+}
+
+/* Coins Notification */
+.notification.coins {
+  background-color: #fff8e1;
+  color: #ffa000;
+}
+
+/* Animation classes */
+.fade-enter {
+  opacity: 0;
+  transform: translateY(50px);
+}
+
+.fade-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 300ms, transform 300ms;
+}
+
+.fade-exit {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.fade-exit-active {
+  opacity: 0;
+  transform: translateY(50px);
+  transition: opacity 300ms, transform 300ms;
+}

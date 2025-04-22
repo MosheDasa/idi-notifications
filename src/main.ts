@@ -34,19 +34,44 @@ function createWindow() {
       container.style.display = 'flex';
       container.style.flexDirection = 'column';
       container.style.gap = '10px';
+      container.style.padding = '16px';
+      container.style.background = 'rgba(255, 255, 255, 0.1)';
+      container.style.borderRadius = '12px';
 
-      const createButton = (text, type) => {
+      const createButton = (text, type, message) => {
         const button = document.createElement('button');
         button.textContent = text;
         button.style.padding = '8px 16px';
         button.style.cursor = 'pointer';
-        button.onclick = () => window.showNotification(type, 'This is a ' + type + ' notification!');
+        button.style.border = 'none';
+        button.style.borderRadius = '6px';
+        button.style.backgroundColor = 'white';
+        button.style.color = '#333';
+        button.style.fontWeight = '500';
+        button.style.transition = 'transform 0.2s';
+        button.onmouseover = () => button.style.transform = 'scale(1.02)';
+        button.onmouseout = () => button.style.transform = 'scale(1)';
+        button.onclick = () => window.showNotification(type, message);
         return button;
       };
 
-      container.appendChild(createButton('Show INFO', 'INFO'));
-      container.appendChild(createButton('Show ERROR', 'ERROR'));
-      container.appendChild(createButton('Show COINS', 'COINS'));
+      container.appendChild(createButton(
+        'Show Info', 
+        'INFO', 
+        'ברוכים הבאים למערכת ההתראות החדשה! כאן תוכלו לקבל עדכונים חשובים.'
+      ));
+      
+      container.appendChild(createButton(
+        'Show Error', 
+        'ERROR', 
+        'שגיאה: לא ניתן להתחבר לשרת. אנא נסו שוב מאוחר יותר.'
+      ));
+      
+      container.appendChild(createButton(
+        'Show Coins', 
+        'COINS', 
+        'מזל טוב! צברת 100 מטבעות חדשים!'
+      ));
 
       document.body.appendChild(container);
     `);

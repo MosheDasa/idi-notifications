@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
 import ReactDOM from "react-dom/client";
 import { AnimatePresence } from "framer-motion";
-import Notification from "./components/Notification";
-import CoinsNotification from "./components/CoinsNotification";
-import "./styles/notifications.css";
+import InfoNotification from "./components/info/InfoNotification";
+import ErrorNotification from "./components/error/ErrorNotification";
+import CoinsNotification from "./components/coins/CoinsNotification";
+import "./components/common/styles.css";
 import { ipcRenderer } from "electron";
 
 interface NotificationItem {
@@ -39,7 +40,7 @@ const App: React.FC = () => {
     );
   };
 
-  return (
+  return notifications.length > 0 ? (
     <div className="notification-container">
       <AnimatePresence>
         {notifications.map((notification) =>
@@ -49,10 +50,15 @@ const App: React.FC = () => {
               message={notification.message}
               onClose={() => removeNotification(notification.id)}
             />
-          ) : (
-            <Notification
+          ) : notification.type === "INFO" ? (
+            <InfoNotification
               key={notification.id}
-              type={notification.type as "INFO" | "ERROR"}
+              message={notification.message}
+              onClose={() => removeNotification(notification.id)}
+            />
+          ) : (
+            <ErrorNotification
+              key={notification.id}
               message={notification.message}
               onClose={() => removeNotification(notification.id)}
             />
@@ -60,7 +66,7 @@ const App: React.FC = () => {
         )}
       </AnimatePresence>
     </div>
-  );
+  ) : null;
 };
 
 const root = ReactDOM.createRoot(

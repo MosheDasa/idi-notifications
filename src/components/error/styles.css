@@ -1,0 +1,35 @@
+.notification.error {
+  border-right: 4px solid #d13438;
+  border-left: none;
+}
+
+.notification.error .notification-icon {
+  color: #d13438;
+  font-size: 20px;
+  margin-left: 12px;
+  margin-right: 0;
+  order: -1;
+}
+
+.notification.error .notification-content {
+  display: flex;
+  align-items: center;
+}
+
+.notification.error .notification-message {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+    Arial, sans-serif;
+}
+
+.notification.error .close-button {
+  position: absolute;
+  left: 12px;
+  right: auto;
+  top: 12px;
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: #666;
+  padding: 0;
+}

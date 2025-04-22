@@ -1,0 +1,35 @@
+.notification.info {
+  border-right: 4px solid #0078d4;
+  border-left: none;
+}
+
+.notification.info .notification-icon {
+  color: #0078d4;
+  font-size: 20px;
+  margin-left: 12px;
+  margin-right: 0;
+  order: -1;
+}
+
+.notification.info .notification-content {
+  display: flex;
+  align-items: center;
+}
+
+.notification.info .notification-message {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+    Arial, sans-serif;
+}
+
+.notification.info .close-button {
+  position: absolute;
+  left: 12px;
+  right: auto;
+  top: 12px;
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: #666;
+  padding: 0;
+}

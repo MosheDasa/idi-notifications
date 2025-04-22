@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import { motion } from "framer-motion";
 import { FaCoins } from "react-icons/fa";
-import "./Notification.css";
+import "./styles.css";
 
 interface CoinsNotificationProps {
   message: string;

@@ -44,6 +44,16 @@ const rendererConfig = {
       template: "./src/index.html",
     }),
   ],
+  resolve: {
+    ...commonConfig.resolve,
+    fallback: {
+      path: false,
+      fs: false,
+    },
+  },
+  externals: {
+    electron: "commonjs electron",
+  },
   devServer: {
     static: {
       directory: path.join(__dirname, "dist"),

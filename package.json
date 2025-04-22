@@ -4,10 +4,10 @@
   "description": "Windows notification application using Electron",
   "main": "dist/main.js",
   "scripts": {
-    "start": "npm run build && electron .",
+    "start": "npm run build && chcp 65001 && electron .",
+    "dev": "cross-env NODE_ENV=development npm run start",
     "build": "webpack --config webpack.config.js",
     "watch": "webpack --watch --config webpack.config.js",
-    "dev": "concurrently \"npm run watch\" \"wait-on dist/main.js && electron .\"",
     "clean": "rimraf dist"
   },
   "dependencies": {
@@ -29,6 +29,7 @@
     "html-webpack-plugin": "^5.5.0",
     "concurrently": "^8.0.0",
     "wait-on": "^7.0.1",
-    "rimraf": "^5.0.0"
+    "rimraf": "^5.0.0",
+    "cross-env": "^7.0.3"
   }
 }

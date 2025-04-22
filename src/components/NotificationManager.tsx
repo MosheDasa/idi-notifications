@@ -12,6 +12,16 @@ interface Notification {
   duration?: number;
 }
 
+interface NotificationManagerProps {
+  onInit?: (
+    showNotification: (
+      type: NotificationType,
+      message: string,
+      duration?: number
+    ) => void
+  ) => void;
+}
+
 // Create a global interface for the window object
 declare global {
   interface Window {
@@ -23,7 +33,9 @@ declare global {
   }
 }
 
-const NotificationManager: React.FC = () => {
+const NotificationManager: React.FC<NotificationManagerProps> = ({
+  onInit,
+}) => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
 
   const showNotification = useCallback(
@@ -34,13 +46,17 @@ const NotificationManager: React.FC = () => {
     []
   );
 
-  // Expose showNotification to window object
+  // Initialize with callback if provided
   React.useEffect(() => {
+    if (onInit) {
+      onInit(showNotification);
+    }
+    // Also expose to window for backward compatibility
     window.showNotification = showNotification;
     return () => {
       delete window.showNotification;
     };
-  }, [showNotification]);
+  }, [showNotification, onInit]);
 
   const removeNotification = (id: number) => {
     setNotifications((prev) =>

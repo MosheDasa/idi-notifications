@@ -1,8 +1,19 @@
 import { app, BrowserWindow } from "electron";
 import * as path from "path";
 
+let mainWindow: BrowserWindow | null = null;
+
+function decodeText(text: string): string {
+  try {
+    return decodeURIComponent(escape(text));
+  } catch {
+    return text;
+  }
+}
+
 function createWindow() {
-  const mainWindow = new BrowserWindow({
+  console.log("Creating window...");
+  mainWindow = new BrowserWindow({
     width: 400,
     height: 600,
     webPreferences: {
@@ -15,8 +26,15 @@ function createWindow() {
     skipTaskbar: true,
   });
 
-  // Load the index.html file
   mainWindow.loadFile(path.join(__dirname, "index.html"));
+
+  // Show window when ready
+  mainWindow.once("ready-to-show", () => {
+    console.log("Window ready to show");
+    if (mainWindow) {
+      mainWindow.show();
+    }
+  });
 
   // Position the window in the bottom-right corner
   const { width, height } = mainWindow.getBounds();
@@ -24,61 +42,39 @@ function createWindow() {
     require("electron").screen.getPrimaryDisplay().workAreaSize;
   mainWindow.setPosition(screenWidth - width - 20, screenHeight - height - 20);
 
-  // Create test buttons after a short delay to ensure the page is loaded
-  setTimeout(() => {
-    mainWindow.webContents.executeJavaScript(`
-      const container = document.createElement('div');
-      container.style.position = 'fixed';
-      container.style.top = '10px';
-      container.style.left = '10px';
-      container.style.display = 'flex';
-      container.style.flexDirection = 'column';
-      container.style.gap = '10px';
-      container.style.padding = '16px';
-      container.style.background = 'rgba(255, 255, 255, 0.1)';
-      container.style.borderRadius = '12px';
+  // Send CLI parameters to renderer (if any)
+  const args = process.argv.slice(process.defaultApp ? 2 : 1);
+  console.log("CLI args:", args);
 
-      const createButton = (text, type, message) => {
-        const button = document.createElement('button');
-        button.textContent = text;
-        button.style.padding = '8px 16px';
-        button.style.cursor = 'pointer';
-        button.style.border = 'none';
-        button.style.borderRadius = '6px';
-        button.style.backgroundColor = 'white';
-        button.style.color = '#333';
-        button.style.fontWeight = '500';
-        button.style.transition = 'transform 0.2s';
-        button.onmouseover = () => button.style.transform = 'scale(1.02)';
-        button.onmouseout = () => button.style.transform = 'scale(1)';
-        button.onclick = () => window.showNotification(type, message);
-        return button;
-      };
+  if (args.length >= 2) {
+    const type = args[0].toUpperCase();
+    const message = decodeText(args.slice(1).join(" "));
+    console.log("Preparing to send notification:", { type, message });
 
-      container.appendChild(createButton(
-        'Show Info', 
-        'INFO', 
-        'ברוכים הבאים למערכת ההתראות החדשה! כאן תוכלו לקבל עדכונים חשובים.'
-      ));
-      
-      container.appendChild(createButton(
-        'Show Error', 
-        'ERROR', 
-        'שגיאה: לא ניתן להתחבר לשרת. אנא נסו שוב מאוחר יותר.'
-      ));
-      
-      container.appendChild(createButton(
-        'Show Coins', 
-        'COINS', 
-        'הצלחת לצבור 1,000₪ כל הכבוד לך!'
-      ));
+    const sendNotification = () => {
+      console.log("Window loaded, sending notification");
+      if (mainWindow) {
+        mainWindow.webContents.send("show-notification", { type, message });
+      }
+    };
 
-      document.body.appendChild(container);
-    `);
-  }, 1000);
+    if (mainWindow.webContents.isLoading()) {
+      mainWindow.webContents.once("did-finish-load", sendNotification);
+    } else {
+      sendNotification();
+    }
+  }
+
+  // Open DevTools in development
+  if (process.env.NODE_ENV === "development") {
+    mainWindow.webContents.openDevTools({ mode: "detach" });
+  }
 }
 
-app.whenReady().then(createWindow);
+app.whenReady().then(() => {
+  console.log("App ready, creating window");
+  createWindow();
+});
 
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin") {

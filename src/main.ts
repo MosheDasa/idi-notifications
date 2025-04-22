@@ -70,7 +70,7 @@ function createWindow() {
       container.appendChild(createButton(
         'Show Coins', 
         'COINS', 
-        'מזל טוב! צברת 100 מטבעות חדשים!'
+        'הצלחת לצבור 1,000₪ כל הכבוד לך!'
       ));
 
       document.body.appendChild(container);

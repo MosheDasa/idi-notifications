@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import ReactDOM from "react-dom/client";
 import { AnimatePresence } from "framer-motion";
 import Notification from "./components/Notification";
+import CoinsNotification from "./components/CoinsNotification";
 import "./styles/notifications.css";
 import { ipcRenderer } from "electron";
 
@@ -41,14 +42,22 @@ const App: React.FC = () => {
   return (
     <div className="notification-container">
       <AnimatePresence>
-        {notifications.map((notification) => (
-          <Notification
-            key={notification.id}
-            type={notification.type}
-            message={notification.message}
-            onClose={() => removeNotification(notification.id)}
-          />
-        ))}
+        {notifications.map((notification) =>
+          notification.type === "COINS" ? (
+            <CoinsNotification
+              key={notification.id}
+              message={notification.message}
+              onClose={() => removeNotification(notification.id)}
+            />
+          ) : (
+            <Notification
+              key={notification.id}
+              type={notification.type as "INFO" | "ERROR"}
+              message={notification.message}
+              onClose={() => removeNotification(notification.id)}
+            />
+          )
+        )}
       </AnimatePresence>
     </div>
   );

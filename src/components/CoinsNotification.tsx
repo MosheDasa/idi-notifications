@@ -1,46 +1,52 @@
-import React from "react";
-import { motion } from "framer-motion";
+import React, { useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import "./CoinsNotification.css";
 
 interface CoinsNotificationProps {
   message: string;
-  duration?: number;
   onClose: () => void;
 }
 
 const CoinsNotification: React.FC<CoinsNotificationProps> = ({
   message,
-  duration,
   onClose,
 }) => {
-  React.useEffect(() => {
-    if (duration) {
-      const timer = setTimeout(onClose, duration);
-      return () => clearTimeout(timer);
-    }
-  }, [duration, onClose]);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      onClose();
+    }, 5000);
+
+    return () => clearTimeout(timer);
+  }, [onClose]);
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 50, scale: 0.95 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, y: 50, scale: 0.95 }}
-      transition={{ duration: 0.3 }}
-      className="coins-notification"
-    >
-      <button className="notification-close" onClick={onClose}>
-        ×
-      </button>
-      <div className="coins-icon">
-        <img
-          src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDgiIGhlaWdodD0iNDgiIHZpZXdCb3g9IjAgMCA0OCA0OCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjQ4IiBoZWlnaHQ9IjQ4IiByeD0iMjQiIGZpbGw9IiNGRkYwQzQiLz4KPHBhdGggZD0iTTE2IDIwQzE2IDE3LjIzODYgMjQuNDc3MiAxNSAzNC42NjY3IDE1QzM5LjYzMTYgMTUgNDQgMTUuODk1NCA0NyAxNy4zMjA0VjMzQzQ3IDM1Ljc2MTQgMzguNTIyOCAzOCAyOC4zMzMzIDM4QzIzLjM2ODQgMzggMTkgMzcuMTA0NiAxNiAzNS42Nzk2VjIwWiIgZmlsbD0iI0ZGQjIwMCIvPgo8cGF0aCBkPSJNMSAyMEMxIDE3LjIzODYgOS40NzcxNyAxNSAxOS42NjY3IDE1QzI0LjYzMTYgMTUgMjkgMTUuODk1NCAzMiAxNy4zMjA0VjMzQzMyIDM1Ljc2MTQgMjMuNTIyOCAzOCAxMy4zMzMzIDM4QzguMzY4MzcgMzggNCAzNy4xMDQ2IDEgMzUuNjc5NlYyMFoiIGZpbGw9IiNGRkQwNEIiLz4KPC9zdmc+Cg=="
-          alt="Coins"
-        />
-      </div>
-      <div className="coins-content">
-        <div className="coins-title">וואו שווה!</div>
-        <div className="coins-message">{message}</div>
-      </div>
-    </motion.div>
+    <AnimatePresence>
+      <motion.div
+        className="coins-notification"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -20 }}
+        transition={{ duration: 0.3 }}
+      >
+        <button className="close-button" onClick={onClose}>
+          ×
+        </button>
+
+        <div className="treasure-icon">
+          <img src="/treasure-chest.png" alt="Treasure Chest" />
+        </div>
+
+        <div className="notification-content">
+          <h2 className="title">וואו שיחקת!!</h2>
+          <p className="subtext">הצלחת לצבור</p>
+          <div className="amount-container">
+            <span className="amount">{message}</span>
+            <img src="/coins-icon.png" alt="Coins" className="coins-icon" />
+          </div>
+          <p className="closing-text">כל הכבוד לך!</p>
+        </div>
+      </motion.div>
+    </AnimatePresence>
   );
 };
 

@@ -1,0 +1,87 @@
+@import url("https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;700&display=swap");
+
+.coins-notification {
+  width: 320px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  position: relative;
+  direction: rtl;
+  font-family: "Assistant", sans-serif;
+}
+
+.close-button {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  background: none;
+  border: none;
+  color: #666;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 4px;
+  line-height: 1;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.close-button:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: #000;
+}
+
+.treasure-icon {
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.treasure-icon img {
+  width: 48px;
+  height: 48px;
+}
+
+.notification-content {
+  text-align: center;
+}
+
+.title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #000;
+  margin: 0 0 8px 0;
+}
+
+.subtext {
+  font-size: 16px;
+  color: #1c1f23;
+  margin: 0 0 12px 0;
+}
+
+.amount-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.amount {
+  font-size: 24px;
+  font-weight: 600;
+  color: #000;
+}
+
+.coins-icon {
+  width: 24px;
+  height: 24px;
+}
+
+.closing-text {
+  font-size: 16px;
+  color: #1c1f23;
+  margin: 0;
+  font-weight: 600;
+}

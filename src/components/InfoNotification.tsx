@@ -1,5 +1,5 @@
 import React from "react";
-import BaseNotification from "./BaseNotification";
+import BaseNotification from "./Notification";
 
 interface InfoNotificationProps {
   message: string;

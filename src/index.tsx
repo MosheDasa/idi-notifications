@@ -1,38 +1,65 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import ReactDOM from "react-dom/client";
-import NotificationManager from "./components/NotificationManager";
+import { AnimatePresence } from "framer-motion";
+import Notification from "./components/Notification";
 import "./styles/notifications.css";
 import { ipcRenderer } from "electron";
-import { NotificationType } from "./components/BaseNotification";
 
-console.log("Renderer process started");
+interface NotificationItem {
+  id: string;
+  type: "INFO" | "ERROR" | "COINS";
+  message: string;
+}
+
+const App: React.FC = () => {
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+
+  useEffect(() => {
+    console.log("Setting up IPC listener");
+    ipcRenderer.on("show-notification", (_, data) => {
+      console.log("Received notification:", data);
+      const newNotification = {
+        id: Date.now().toString(),
+        type: data.type,
+        message: data.message,
+      };
+      setNotifications((prev) => [...prev, newNotification]);
+    });
+
+    return () => {
+      ipcRenderer.removeAllListeners("show-notification");
+    };
+  }, []);
+
+  const removeNotification = (id: string) => {
+    console.log("Removing notification:", id);
+    setNotifications((prev) =>
+      prev.filter((notification) => notification.id !== id)
+    );
+  };
+
+  return (
+    <div className="notification-container">
+      <AnimatePresence>
+        {notifications.map((notification) => (
+          <Notification
+            key={notification.id}
+            type={notification.type}
+            message={notification.message}
+            onClose={() => removeNotification(notification.id)}
+          />
+        ))}
+      </AnimatePresence>
+    </div>
+  );
+};
 
 const root = ReactDOM.createRoot(
   document.getElementById("root") as HTMLElement
 );
 
-// Create a ref to store the showNotification function
-let showNotificationRef:
-  | ((type: NotificationType, message: string, duration?: number) => void)
-  | null = null;
-
-// Listen for show-notification events
-ipcRenderer.on("show-notification", (_, { type, message }) => {
-  console.log("Received notification:", { type, message });
-  if (showNotificationRef) {
-    showNotificationRef(type as NotificationType, message);
-  } else {
-    console.error("showNotificationRef is not initialized");
-  }
-});
-
 root.render(
   <React.StrictMode>
-    <NotificationManager
-      onInit={(showNotification) => {
-        console.log("NotificationManager initialized");
-        showNotificationRef = showNotification;
-      }}
-    />
+    <App />
   </React.StrictMode>
 );

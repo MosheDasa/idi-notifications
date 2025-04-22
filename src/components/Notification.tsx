@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import "./CoinsNotification.css";
+import { motion } from "framer-motion";
+import "./Notification.css";
 
 interface NotificationProps {
   type: "INFO" | "ERROR" | "COINS";

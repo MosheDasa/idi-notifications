@@ -13,8 +13,8 @@
 
 /* Coins Notification Specific Styles */
 .coins-notification {
-  width: 280px;
-  background: white;
+  width: 364px;
+  background: rgba(255, 255, 255, 0.95);
   border-radius: 8px;
   padding: 16px;
   position: relative;
@@ -22,20 +22,34 @@
   flex-direction: column;
   align-items: center;
   text-align: center;
-  box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.15);
   direction: rtl;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
 }
 
 .coins-notification .notification-close {
   position: absolute;
   top: 8px;
   left: 8px;
-  width: 24px;
-  height: 24px;
-  border-radius: 12px;
-  background: rgba(0, 0, 0, 0.05);
+  width: 32px;
+  height: 32px;
+  border-radius: 16px;
+  background: transparent;
   color: rgba(0, 0, 0, 0.4);
-  font-size: 18px;
+  font-size: 20px;
   line-height: 1;
   display: flex;
   align-items: center;
@@ -47,7 +61,7 @@
 }
 
 .coins-notification .notification-close:hover {
-  background: rgba(0, 0, 0, 0.1);
+  background: rgba(0, 0, 0, 0.05);
   color: rgba(0, 0, 0, 0.6);
 }
 
@@ -58,6 +72,7 @@
 .coins-icon img {
   width: 48px;
   height: 48px;
+  filter: drop-shadow(0px 2px 4px rgba(0, 0, 0, 0.1));
 }
 
 .coins-content {
@@ -71,26 +86,45 @@
   font-size: 16px;
   font-weight: 600;
   margin-bottom: 4px;
+  color: #000;
 }
 
 .coins-message {
   font-size: 14px;
   color: #1c1f23;
   opacity: 0.8;
+  line-height: 1.4;
 }
 
-/* Keep other notification styles for backward compatibility */
+/* Info Notification */
+.notification.info {
+  width: 364px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.15);
+  animation: slideIn 0.3s ease-out;
+  direction: rtl;
+}
+
+/* Error Notification */
+.notification.error {
+  width: 364px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(220, 53, 69, 0.3);
+  box-shadow: 0px 4px 12px rgba(220, 53, 69, 0.15);
+  animation: slideIn 0.3s ease-out;
+  direction: rtl;
+}
+
+/* Base notification styles */
 .notification {
-  min-width: 300px;
-  max-width: 400px;
   padding: 16px;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border-radius: 8px;
   display: flex;
   align-items: flex-start;
   gap: 12px;
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .notification-icon {
@@ -118,46 +152,19 @@
   font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  color: #000;
 }
 
 .notification-time {
   font-size: 12px;
-  opacity: 0.8;
+  opacity: 0.6;
 }
 
 .notification-message {
   margin: 0;
   font-size: 14px;
-  line-height: 1.5;
-}
-
-.notification-close {
-  background: none;
-  border: none;
-  font-size: 20px;
-  cursor: pointer;
-  padding: 4px;
-  margin: -4px;
-  color: inherit;
-  opacity: 0.6;
-  transition: opacity 0.2s;
-  flex-shrink: 0;
-}
-
-.notification-close:hover {
-  opacity: 1;
-}
-
-/* Info Notification */
-.notification.info {
-  background-color: rgba(227, 242, 253, 0.95);
-  color: #1976d2;
-}
-
-/* Error Notification */
-.notification.error {
-  background-color: rgba(255, 235, 238, 0.95);
-  color: #d32f2f;
+  line-height: 1.4;
+  color: #1c1f23;
 }
 
 /* Animation classes */

@@ -1,13 +1,71 @@
 import { app, BrowserWindow } from "electron";
 import * as path from "path";
+import axios from "axios";
+
+interface NotificationResponse {
+  hasNotification: boolean;
+  notification?: {
+    id: string;
+    type: "INFO" | "ERROR" | "COINS";
+    message: string;
+  };
+}
 
 let mainWindow: BrowserWindow | null = null;
+let lastNotificationId: string | null = null;
+let pollingInterval: NodeJS.Timeout | null = null;
 
 function decodeText(text: string): string {
   try {
     return decodeURIComponent(escape(text));
   } catch {
     return text;
+  }
+}
+
+async function checkForNotifications() {
+  try {
+    const response = await axios.get<NotificationResponse>(
+      "http://localhost:3000/notifications/check"
+    );
+    const data = response.data;
+    console.log("dasa", data);
+    if (data.hasNotification && data.notification) {
+      // Check if we haven't shown this notification before
+      if (data.notification.id !== lastNotificationId) {
+        const { type, message } = data.notification;
+
+        // Update the last shown notification ID
+        lastNotificationId = data.notification.id;
+
+        // Send notification to renderer if window exists
+        if (mainWindow) {
+          mainWindow.webContents.send("show-notification", { type, message });
+        }
+      }
+    }
+  } catch (error) {
+    console.error("Failed to check for notifications:", error);
+  }
+}
+
+function startPolling() {
+  // Clear any existing interval
+  if (pollingInterval) {
+    clearInterval(pollingInterval);
+  }
+
+  // Start polling every 10 seconds
+  pollingInterval = setInterval(checkForNotifications, 10000);
+
+  // Do an initial check immediately
+  checkForNotifications();
+}
+
+function stopPolling() {
+  if (pollingInterval) {
+    clearInterval(pollingInterval);
+    pollingInterval = null;
   }
 }
 
@@ -65,10 +123,21 @@ function createWindow() {
     }
   }
 
+  // Start polling for notifications when window is ready
+  mainWindow.webContents.once("did-finish-load", () => {
+    startPolling();
+  });
+
   // Open DevTools in development
   if (process.env.NODE_ENV === "development") {
     mainWindow.webContents.openDevTools({ mode: "detach" });
   }
+
+  // Stop polling when window is closed
+  mainWindow.on("closed", () => {
+    stopPolling();
+    mainWindow = null;
+  });
 }
 
 app.whenReady().then(() => {
@@ -77,6 +146,7 @@ app.whenReady().then(() => {
 });
 
 app.on("window-all-closed", () => {
+  stopPolling();
   if (process.platform !== "darwin") {
     app.quit();
   }

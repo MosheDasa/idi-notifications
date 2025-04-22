@@ -6,9 +6,89 @@
   flex-direction: column-reverse;
   gap: 10px;
   z-index: 1000;
-  max-height: calc(100vh - 40px);
-  overflow-y: auto;
-  padding: 10px;
+}
+
+.notification {
+  width: 320px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  position: relative;
+  direction: rtl;
+}
+
+.notification-content {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.notification-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.notification-type {
+  font-size: 14px;
+  font-weight: 600;
+  color: #000;
+}
+
+.notification-close {
+  background: none;
+  border: none;
+  color: #666;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 4px;
+  line-height: 1;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.notification-close:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: #000;
+}
+
+.notification-message {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.4;
+  color: #1c1f23;
+}
+
+/* Type-specific styles */
+.notification.coins {
+  border-left: 4px solid #ffd700;
+}
+
+.notification.info {
+  border-left: 4px solid #0078d4;
+}
+
+.notification.error {
+  border-left: 4px solid #d13438;
+}
+
+/* Animation */
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.notification {
+  animation: slideIn 0.3s ease-out;
 }
 
 /* Coins Notification Specific Styles */
@@ -27,42 +107,6 @@
   backdrop-filter: blur(10px);
   border: 1px solid rgba(0, 0, 0, 0.1);
   animation: slideIn 0.3s ease-out;
-}
-
-@keyframes slideIn {
-  from {
-    transform: translateX(100%);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
-}
-
-.coins-notification .notification-close {
-  position: absolute;
-  top: 8px;
-  left: 8px;
-  width: 32px;
-  height: 32px;
-  border-radius: 16px;
-  background: transparent;
-  color: rgba(0, 0, 0, 0.4);
-  font-size: 20px;
-  line-height: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  border: none;
-  padding: 0;
-  transition: all 0.2s ease;
-}
-
-.coins-notification .notification-close:hover {
-  background: rgba(0, 0, 0, 0.05);
-  color: rgba(0, 0, 0, 0.6);
 }
 
 .coins-icon {
@@ -94,77 +138,6 @@
   color: #1c1f23;
   opacity: 0.8;
   line-height: 1.4;
-}
-
-/* Info Notification */
-.notification.info {
-  width: 364px;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.15);
-  animation: slideIn 0.3s ease-out;
-  direction: rtl;
-}
-
-/* Error Notification */
-.notification.error {
-  width: 364px;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(220, 53, 69, 0.3);
-  box-shadow: 0px 4px 12px rgba(220, 53, 69, 0.15);
-  animation: slideIn 0.3s ease-out;
-  direction: rtl;
-}
-
-/* Base notification styles */
-.notification {
-  padding: 16px;
-  border-radius: 8px;
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-}
-
-.notification-icon {
-  font-size: 24px;
-  line-height: 1;
-  flex-shrink: 0;
-}
-
-.notification-content {
-  flex-grow: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.notification-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 4px;
-}
-
-.notification-type {
-  font-weight: 600;
-  font-size: 12px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: #000;
-}
-
-.notification-time {
-  font-size: 12px;
-  opacity: 0.6;
-}
-
-.notification-message {
-  margin: 0;
-  font-size: 14px;
-  line-height: 1.4;
-  color: #1c1f23;
 }
 
 /* Animation classes */

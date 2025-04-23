@@ -6,7 +6,7 @@ interface NotificationResponse {
   hasNotification: boolean;
   notification?: {
     id: string;
-    type: "INFO" | "ERROR" | "COINS";
+    type: "INFO" | "ERROR" | "COINS" | "FREE_HTML";
     message: string;
   };
 }

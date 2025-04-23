@@ -4,12 +4,13 @@ import { AnimatePresence } from "framer-motion";
 import InfoNotification from "./components/info/InfoNotification";
 import ErrorNotification from "./components/error/ErrorNotification";
 import CoinsNotification from "./components/coins/CoinsNotification";
+import FreeHtmlNotification from "./components/free-html/FreeHtmlNotification";
 import "./components/common/styles.css";
 import { ipcRenderer } from "electron";
 
 interface NotificationItem {
   id: string;
-  type: "INFO" | "ERROR" | "COINS";
+  type: "INFO" | "ERROR" | "COINS" | "FREE_HTML";
   message: string;
 }
 
@@ -43,27 +44,42 @@ const App: React.FC = () => {
   return notifications.length > 0 ? (
     <div className="notification-container">
       <AnimatePresence>
-        {notifications.map((notification) =>
-          notification.type === "COINS" ? (
-            <CoinsNotification
-              key={notification.id}
-              message={notification.message}
-              onClose={() => removeNotification(notification.id)}
-            />
-          ) : notification.type === "INFO" ? (
-            <InfoNotification
-              key={notification.id}
-              message={notification.message}
-              onClose={() => removeNotification(notification.id)}
-            />
-          ) : (
-            <ErrorNotification
-              key={notification.id}
-              message={notification.message}
-              onClose={() => removeNotification(notification.id)}
-            />
-          )
-        )}
+        {notifications.map((notification) => {
+          switch (notification.type) {
+            case "COINS":
+              return (
+                <CoinsNotification
+                  key={notification.id}
+                  message={notification.message}
+                  onClose={() => removeNotification(notification.id)}
+                />
+              );
+            case "INFO":
+              return (
+                <InfoNotification
+                  key={notification.id}
+                  message={notification.message}
+                  onClose={() => removeNotification(notification.id)}
+                />
+              );
+            case "FREE_HTML":
+              return (
+                <FreeHtmlNotification
+                  key={notification.id}
+                  message={notification.message}
+                  onClose={() => removeNotification(notification.id)}
+                />
+              );
+            default:
+              return (
+                <ErrorNotification
+                  key={notification.id}
+                  message={notification.message}
+                  onClose={() => removeNotification(notification.id)}
+                />
+              );
+          }
+        })}
       </AnimatePresence>
     </div>
   ) : null;

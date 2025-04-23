@@ -4,11 +4,11 @@
 
 .notification-container {
   position: fixed;
-  bottom: 20px;
-  right: 20px;
+  bottom: var(--notification-position-bottom, 20px);
+  right: var(--notification-position-right, 20px);
   display: flex;
   flex-direction: column-reverse;
-  gap: 10px;
+  gap: var(--notification-gap, 10px);
   z-index: 1000;
   min-width: 0;
   min-height: 0;
@@ -17,7 +17,7 @@
 }
 
 .notification {
-  width: 320px;
+  width: var(--notification-width, 320px);
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(10px);
   border-radius: 8px;

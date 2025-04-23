@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
+import { config } from "../../config";
 import "./styles.css";
 import "../common/styles.css";
 
@@ -35,13 +36,33 @@ const UrlHtmlNotification: React.FC<UrlHtmlNotificationProps> = ({
 
     fetchContent();
 
-    // Close notification after 10 seconds
+    // Close notification after configured timeout
     const timer = setTimeout(() => {
       onClose();
-    }, 10000);
+    }, config.notifications.timeouts.urlHtml);
 
     return () => clearTimeout(timer);
   }, [url, onClose]);
+
+  useEffect(() => {
+    // Set CSS variables for styling
+    document.documentElement.style.setProperty(
+      "--notification-width",
+      `${config.notifications.ui.width}px`
+    );
+    document.documentElement.style.setProperty(
+      "--notification-position-bottom",
+      `${config.notifications.ui.positionBottom}px`
+    );
+    document.documentElement.style.setProperty(
+      "--notification-position-right",
+      `${config.notifications.ui.positionRight}px`
+    );
+    document.documentElement.style.setProperty(
+      "--notification-gap",
+      `${config.notifications.ui.gap}px`
+    );
+  }, []);
 
   return (
     <motion.div

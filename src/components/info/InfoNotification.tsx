@@ -1,6 +1,7 @@
 import React, { useEffect } from "react";
 import { motion } from "framer-motion";
 import { FaInfo } from "react-icons/fa";
+import { config } from "../../config";
 import "./styles.css";
 import "../common/styles.css";
 
@@ -16,7 +17,7 @@ const InfoNotification: React.FC<InfoNotificationProps> = ({
   useEffect(() => {
     const timer = setTimeout(() => {
       onClose();
-    }, 5000);
+    }, config.notifications.timeouts.default);
 
     return () => clearTimeout(timer);
   }, [onClose]);

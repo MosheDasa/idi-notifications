@@ -1,6 +1,27 @@
 import { app, BrowserWindow } from "electron";
 import * as path from "path";
 import axios from "axios";
+import * as dotenv from "dotenv";
+import { config } from "./config";
+
+// Load environment variables from .env file
+dotenv.config({ path: path.join(__dirname, "../.env") });
+
+// Define environment variables interface
+interface EnvVars {
+  VITE_API_URL: string;
+  VITE_API_NOTIFICATIONS_ENDPOINT: string;
+  VITE_API_POLLING_INTERVAL: string;
+  [key: string]: string | undefined;
+}
+
+// Get environment variables with defaults
+const env: EnvVars = {
+  VITE_API_URL: process.env.VITE_API_URL || "http://localhost:3001",
+  VITE_API_NOTIFICATIONS_ENDPOINT:
+    process.env.VITE_API_NOTIFICATIONS_ENDPOINT || "/notifications/check",
+  VITE_API_POLLING_INTERVAL: process.env.VITE_API_POLLING_INTERVAL || "10000",
+};
 
 interface NotificationResponse {
   hasNotification: boolean;
@@ -27,13 +48,24 @@ async function checkForNotifications() {
   try {
     console.log("Checking for notifications...");
     const response = await axios.get<NotificationResponse>(
-      "http://localhost:3001/notifications/check"
+      `${config.api.baseUrl}${config.api.notificationsEndpoint}`,
+      {
+        params: {
+          userId: config.api.userId,
+        },
+      }
     );
     const data = response.data;
     console.log("Server response:", data);
 
     if (data.hasNotification && data.notification) {
       console.log("Found new notification:", data.notification);
+
+      // בדיקה שזו לא התראה שכבר הוצגה
+      if (data.notification.id === lastNotificationId) {
+        console.log("Notification already shown, skipping");
+        return;
+      }
 
       console.log("Notification is new, showing it...");
       const { type, message } = data.notification;
@@ -62,8 +94,11 @@ function startPolling() {
     clearInterval(pollingInterval);
   }
 
-  // Start polling every 10 seconds
-  pollingInterval = setInterval(checkForNotifications, 10000);
+  // Start polling with configured interval
+  pollingInterval = setInterval(
+    checkForNotifications,
+    parseInt(env.VITE_API_POLLING_INTERVAL)
+  );
 
   // Do an initial check immediately
   checkForNotifications();
@@ -79,8 +114,8 @@ function stopPolling() {
 function createWindow() {
   console.log("Creating window...");
   mainWindow = new BrowserWindow({
-    width: 400,
-    height: 600,
+    width: config.window.width,
+    height: config.window.height,
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false,
@@ -116,7 +151,10 @@ function createWindow() {
   const { width, height } = mainWindow.getBounds();
   const { width: screenWidth, height: screenHeight } =
     require("electron").screen.getPrimaryDisplay().workAreaSize;
-  mainWindow.setPosition(screenWidth - width - 20, screenHeight - height - 20);
+  mainWindow.setPosition(
+    screenWidth - width - config.window.margin,
+    screenHeight - height - config.window.margin
+  );
 
   // Send CLI parameters to renderer (if any)
   const args = process.argv.slice(process.defaultApp ? 2 : 1);

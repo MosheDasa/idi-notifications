@@ -1,6 +1,7 @@
 import React, { useEffect } from "react";
 import { motion } from "framer-motion";
 import { FaCoins } from "react-icons/fa";
+import { config } from "../../config";
 import "./styles.css";
 
 interface CoinsNotificationProps {
@@ -15,7 +16,7 @@ const CoinsNotification: React.FC<CoinsNotificationProps> = ({
   useEffect(() => {
     const timer = setTimeout(() => {
       onClose();
-    }, 5000);
+    }, config.notifications.timeouts.coins);
 
     return () => clearTimeout(timer);
   }, [onClose]);

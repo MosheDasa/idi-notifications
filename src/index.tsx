@@ -14,6 +14,8 @@ interface NotificationItem {
   id: string;
   type: "INFO" | "ERROR" | "COINS" | "FREE_HTML" | "URL_HTML";
   message: string;
+  isPermanent?: boolean;
+  displayTime?: number;
 }
 
 const App: React.FC = () => {
@@ -27,6 +29,8 @@ const App: React.FC = () => {
         id: Date.now().toString(),
         type: data.type,
         message: data.message,
+        isPermanent: data.isPermanent ?? true,
+        displayTime: data.displayTime,
       };
       setNotifications((prev) => [...prev, newNotification]);
     });
@@ -48,13 +52,19 @@ const App: React.FC = () => {
     <div className="notification-container">
       <AnimatePresence>
         {notifications.map((notification) => {
+          const commonProps = {
+            isPermanent: notification.isPermanent ?? true,
+            displayTime: notification.displayTime,
+            onClose: () => removeNotification(notification.id),
+          };
+
           switch (notification.type) {
             case "COINS":
               return (
                 <CoinsNotification
                   key={notification.id}
                   message={notification.message}
-                  onClose={() => removeNotification(notification.id)}
+                  {...commonProps}
                 />
               );
             case "INFO":
@@ -62,7 +72,7 @@ const App: React.FC = () => {
                 <InfoNotification
                   key={notification.id}
                   message={notification.message}
-                  onClose={() => removeNotification(notification.id)}
+                  {...commonProps}
                 />
               );
             case "FREE_HTML":
@@ -70,15 +80,16 @@ const App: React.FC = () => {
                 <FreeHtmlNotification
                   key={notification.id}
                   message={notification.message}
-                  onClose={() => removeNotification(notification.id)}
+                  {...commonProps}
                 />
               );
             case "URL_HTML":
               return (
                 <UrlHtmlNotification
                   key={notification.id}
+                  message={notification.message}
                   url={notification.message}
-                  onClose={() => removeNotification(notification.id)}
+                  {...commonProps}
                 />
               );
             default:
@@ -86,7 +97,7 @@ const App: React.FC = () => {
                 <ErrorNotification
                   key={notification.id}
                   message={notification.message}
-                  onClose={() => removeNotification(notification.id)}
+                  {...commonProps}
                 />
               );
           }

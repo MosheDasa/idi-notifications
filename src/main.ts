@@ -106,7 +106,17 @@ interface NotificationResponse {
     id: string;
     type: "INFO" | "ERROR" | "COINS" | "FREE_HTML" | "URL_HTML";
     message: string;
+    isPermanent?: boolean;
+    displayTime?: number;
   };
+}
+
+interface ProcessedNotification {
+  id: string;
+  type: "INFO" | "ERROR" | "COINS" | "FREE_HTML" | "URL_HTML";
+  message: string;
+  isPermanent: boolean;
+  displayTime?: number;
 }
 
 let mainWindow: BrowserWindow | null = null;
@@ -130,54 +140,57 @@ async function checkForNotifications() {
     const response = await axios.get<NotificationResponse>(
       externalConfig.API_URL,
       {
-        params: {
-          userId: userId,
-        },
+        params: { userId },
       }
     );
 
     const data = response.data;
-    if (externalConfig.LOG) {
-      writeLog("INFO", "NOTIFICATION_RESPONSE", { response: data });
-    }
+    writeLog("DEBUG", "RAW_NOTIFICATION_DATA", { data });
 
     if (data.hasNotification && data.notification) {
-      if (externalConfig.LOG) {
-        writeLog("INFO", "NEW_NOTIFICATION_FOUND", {
-          notification: data.notification,
-        });
-      }
+      const notification = data.notification;
 
-      if (data.notification.id === lastNotificationId) {
-        if (externalConfig.LOG) {
-          writeLog("INFO", "DUPLICATE_NOTIFICATION_SKIPPED", {
-            notificationId: lastNotificationId,
-          });
-        }
+      if (notification.id === lastNotificationId) {
+        writeLog("INFO", "DUPLICATE_NOTIFICATION_SKIPPED", {
+          notificationId: lastNotificationId,
+          notification,
+        });
         return;
       }
 
-      if (externalConfig.LOG) {
-        writeLog("INFO", "PROCESSING_NEW_NOTIFICATION", {
-          notification: data.notification,
-        });
+      writeLog("DEBUG", "ORIGINAL_NOTIFICATION_VALUES", {
+        isPermanent: notification.isPermanent,
+        type: typeof notification.isPermanent,
+        displayTime: notification.displayTime,
+      });
+
+      const notificationData: ProcessedNotification = {
+        type: notification.type,
+        message: notification.message,
+        id: notification.id,
+        isPermanent: true,
+        displayTime: undefined,
+      };
+
+      if (notification.isPermanent === false) {
+        notificationData.isPermanent = false;
+        notificationData.displayTime = notification.displayTime || 5000;
       }
 
-      const { type, message } = data.notification;
-      lastNotificationId = data.notification.id;
+      writeLog("INFO", "PROCESSED_NOTIFICATION_DATA", {
+        original: notification,
+        processed: notificationData,
+      });
+
+      lastNotificationId = notification.id;
 
       if (mainWindow) {
-        if (externalConfig.LOG) {
-          writeLog("INFO", "SENDING_NOTIFICATION_TO_RENDERER", {
-            type,
-            message,
-          });
-        }
-        mainWindow.webContents.send("show-notification", { type, message });
+        writeLog("DEBUG", "SENDING_TO_RENDERER", { notificationData });
+        mainWindow.webContents.send("show-notification", notificationData);
       } else {
         writeLog("ERROR", "MAIN_WINDOW_NOT_AVAILABLE");
       }
-    } else if (externalConfig.LOG) {
+    } else {
       writeLog("INFO", "NO_NEW_NOTIFICATIONS");
     }
   } catch (error) {

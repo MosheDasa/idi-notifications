@@ -1,48 +1,31 @@
-import React, { useEffect } from "react";
-import { motion } from "framer-motion";
+import React from "react";
 import { FaCoins } from "react-icons/fa";
-import { config } from "../../config";
-import "./styles.css";
+import BaseNotification, {
+  BaseNotificationProps,
+} from "../common/BaseNotification";
 
-interface CoinsNotificationProps {
-  message: string;
-  onClose: () => void;
-}
+interface CoinsNotificationProps
+  extends Omit<BaseNotificationProps, "className" | "children"> {}
 
 const CoinsNotification: React.FC<CoinsNotificationProps> = ({
   message,
   onClose,
+  isPermanent,
+  displayTime,
 }) => {
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      onClose();
-    }, config.notifications.timeouts.coins);
-
-    return () => clearTimeout(timer);
-  }, [onClose]);
-
   return (
-    <motion.div
-      className="notification coins"
-      initial={{ opacity: 0, y: -50, scale: 0.3 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.5, transition: { duration: 0.2 } }}
+    <BaseNotification
+      message={message}
+      onClose={onClose}
+      isPermanent={isPermanent}
+      displayTime={displayTime}
+      className="coins-notification"
     >
-      <button className="close-button" onClick={onClose}>
-        ×
-      </button>
-      <div className="coins-content">
-        <div className="main-text">{message}</div>
-        <div className="main-text">הצלחת לצבור</div>
-        <div className="amount-row">
-          <span className="amount">1,000₪</span>
-          <div className="coins-icon">
-            <FaCoins />
-          </div>
-        </div>
-        <div className="sub-text">כל הכבוד לך</div>
+      <div className="notification-content">
+        <FaCoins className="notification-icon" />
+        <p>{message}</p>
       </div>
-    </motion.div>
+    </BaseNotification>
   );
 };
 

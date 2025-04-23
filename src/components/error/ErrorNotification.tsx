@@ -1,44 +1,33 @@
-import React, { useEffect } from "react";
-import { motion } from "framer-motion";
+import React from "react";
 import { FaExclamationCircle } from "react-icons/fa";
-import { config } from "../../config";
-import "./styles.css";
-import "../common/styles.css";
+import BaseNotification, {
+  BaseNotificationProps,
+} from "../common/BaseNotification";
 
-interface ErrorNotificationProps {
-  message: string;
-  onClose: () => void;
-}
+interface ErrorNotificationProps
+  extends Omit<BaseNotificationProps, "className" | "children"> {}
 
 const ErrorNotification: React.FC<ErrorNotificationProps> = ({
   message,
   onClose,
+  isPermanent,
+  displayTime,
 }) => {
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      onClose();
-    }, config.notifications.timeouts.error);
-
-    return () => clearTimeout(timer);
-  }, [onClose]);
-
   return (
-    <motion.div
-      className="notification error"
-      initial={{ opacity: 0, y: -50, scale: 0.3 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.5, transition: { duration: 0.2 } }}
+    <BaseNotification
+      message={message}
+      onClose={onClose}
+      isPermanent={isPermanent}
+      displayTime={displayTime}
+      className="error-notification"
     >
-      <button className="close-button" onClick={onClose}>
-        ×
-      </button>
       <div className="notification-content">
         <div className="notification-icon">
           <FaExclamationCircle />
         </div>
         <div className="notification-message">{message}</div>
       </div>
-    </motion.div>
+    </BaseNotification>
   );
 };
 

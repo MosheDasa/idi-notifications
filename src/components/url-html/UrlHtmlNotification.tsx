@@ -1,89 +1,87 @@
 import React, { useEffect, useState } from "react";
-import { motion } from "framer-motion";
-import { config } from "../../config";
-import "./styles.css";
-import "../common/styles.css";
+import axios from "axios";
+import BaseNotification, {
+  BaseNotificationProps,
+} from "../common/BaseNotification";
 
-interface UrlHtmlNotificationProps {
+interface UrlHtmlNotificationProps
+  extends Omit<BaseNotificationProps, "className" | "children"> {
   url: string;
-  onClose: () => void;
 }
 
 const UrlHtmlNotification: React.FC<UrlHtmlNotificationProps> = ({
-  url,
+  message = "Loading content...",
   onClose,
+  isPermanent,
+  displayTime,
+  url,
 }) => {
-  const [content, setContent] = useState<string>("");
-  const [error, setError] = useState<string>("");
+  const [htmlContent, setHtmlContent] = useState<string>("");
+  const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const fetchContent = async () => {
+    const fetchHtmlContent = async () => {
       try {
-        const response = await fetch(url);
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const html = await response.text();
-        setContent(html);
-      } catch (err: any) {
-        setError(`Failed to load content: ${err.message}`);
-        console.error("Error loading HTML content:", err);
+        const response = await axios.get(url);
+        setHtmlContent(response.data);
+        setError(null);
+      } catch (err) {
+        setError("Failed to load content from URL");
+        console.error("Error fetching HTML content:", err);
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchContent();
+    fetchHtmlContent();
+  }, [url]);
 
-    // Close notification after configured timeout
-    const timer = setTimeout(() => {
-      onClose();
-    }, config.notifications.timeouts.urlHtml);
+  if (isLoading) {
+    return (
+      <BaseNotification
+        message={message}
+        onClose={onClose}
+        isPermanent={isPermanent}
+        displayTime={displayTime}
+        className="url-html-notification loading"
+      >
+        <div className="notification-content">
+          <div className="loading-spinner">Loading...</div>
+        </div>
+      </BaseNotification>
+    );
+  }
 
-    return () => clearTimeout(timer);
-  }, [url, onClose]);
-
-  useEffect(() => {
-    // Set CSS variables for styling
-    document.documentElement.style.setProperty(
-      "--notification-width",
-      `${config.notifications.ui.width}px`
+  if (error) {
+    return (
+      <BaseNotification
+        message={message}
+        onClose={onClose}
+        isPermanent={isPermanent}
+        displayTime={displayTime}
+        className="url-html-notification error"
+      >
+        <div className="notification-content">
+          <div className="error-message">{error}</div>
+        </div>
+      </BaseNotification>
     );
-    document.documentElement.style.setProperty(
-      "--notification-position-bottom",
-      `${config.notifications.ui.positionBottom}px`
-    );
-    document.documentElement.style.setProperty(
-      "--notification-position-right",
-      `${config.notifications.ui.positionRight}px`
-    );
-    document.documentElement.style.setProperty(
-      "--notification-gap",
-      `${config.notifications.ui.gap}px`
-    );
-  }, []);
+  }
 
   return (
-    <motion.div
-      className="notification url-html"
-      initial={{ opacity: 0, y: -50, scale: 0.3 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.5, transition: { duration: 0.2 } }}
+    <BaseNotification
+      message={message}
+      onClose={onClose}
+      isPermanent={isPermanent}
+      displayTime={displayTime}
+      className="url-html-notification"
     >
-      <button className="close-button" onClick={onClose}>
-        ×
-      </button>
-      <div className="notification-content">
-        {isLoading ? (
-          <div className="loading">טוען תוכן...</div>
-        ) : error ? (
-          <div className="error">{error}</div>
-        ) : (
-          <div dangerouslySetInnerHTML={{ __html: content }} />
-        )}
-      </div>
-    </motion.div>
+      <div
+        className="notification-content"
+        dangerouslySetInnerHTML={{ __html: htmlContent }}
+      />
+    </BaseNotification>
   );
 };
 

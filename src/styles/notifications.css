@@ -237,3 +237,255 @@
   transform: translateY(50px);
   transition: opacity 300ms, transform 300ms;
 }
+
+/* HTML Notification Styles */
+.notification.html {
+  min-width: 280px;
+  max-width: 500px;
+  width: auto;
+}
+
+.notification.html .notification-message {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
+    Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+}
+
+.notification.html h1 {
+  font-size: 20px;
+  font-weight: 600;
+  margin: 0 0 12px 0;
+  color: #000;
+}
+
+.notification.html h2 {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0 0 10px 0;
+  color: #000;
+}
+
+.notification.html h3 {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0 0 8px 0;
+  color: #000;
+}
+
+.notification.html p {
+  margin: 0 0 12px 0;
+  line-height: 1.5;
+}
+
+.notification.html ul,
+.notification.html ol {
+  margin: 0 0 12px 0;
+  padding-right: 24px;
+  padding-left: 0;
+}
+
+.notification.html li {
+  margin: 4px 0;
+}
+
+.notification.html img {
+  max-width: 100%;
+  height: auto;
+  margin: 8px 0;
+  border-radius: 4px;
+}
+
+.notification.html a {
+  color: #0078d4;
+  text-decoration: none;
+}
+
+.notification.html a:hover {
+  text-decoration: underline;
+}
+
+.notification.html hr {
+  border: none;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  margin: 12px 0;
+}
+
+.notification.html code {
+  background: rgba(0, 0, 0, 0.05);
+  padding: 2px 4px;
+  border-radius: 4px;
+  font-family: "Consolas", "Monaco", monospace;
+  font-size: 0.9em;
+}
+
+.notification.html pre {
+  background: rgba(0, 0, 0, 0.05);
+  padding: 12px;
+  border-radius: 4px;
+  overflow-x: auto;
+  margin: 8px 0;
+}
+
+.notification.html pre code {
+  background: none;
+  padding: 0;
+}
+
+.notification.html blockquote {
+  margin: 12px 0;
+  padding: 8px 16px;
+  border-right: 4px solid rgba(0, 0, 0, 0.1);
+  background: rgba(0, 0, 0, 0.02);
+}
+
+.notification.html table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 12px 0;
+}
+
+.notification.html th,
+.notification.html td {
+  padding: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  text-align: right;
+}
+
+.notification.html th {
+  background: rgba(0, 0, 0, 0.02);
+  font-weight: 600;
+}
+
+/* URL HTML Notification Styles */
+.notification.url-html-notification {
+  min-width: 280px;
+  max-width: 500px;
+  width: auto;
+}
+
+.notification.url-html-notification .notification-content {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
+    Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+}
+
+.notification.url-html-notification.loading .notification-content {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100px;
+}
+
+.notification.url-html-notification.loading .loading-spinner {
+  color: #666;
+  font-size: 14px;
+}
+
+.notification.url-html-notification.error .notification-content {
+  color: #d13438;
+  padding: 16px;
+  text-align: center;
+}
+
+.notification.url-html-notification h1 {
+  font-size: 20px;
+  font-weight: 600;
+  margin: 0 0 12px 0;
+  color: #000;
+}
+
+.notification.url-html-notification h2 {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0 0 10px 0;
+  color: #000;
+}
+
+.notification.url-html-notification h3 {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0 0 8px 0;
+  color: #000;
+}
+
+.notification.url-html-notification p {
+  margin: 0 0 12px 0;
+  line-height: 1.5;
+}
+
+.notification.url-html-notification ul,
+.notification.url-html-notification ol {
+  margin: 0 0 12px 0;
+  padding-right: 24px;
+  padding-left: 0;
+}
+
+.notification.url-html-notification li {
+  margin: 4px 0;
+}
+
+.notification.url-html-notification img {
+  max-width: 100%;
+  height: auto;
+  margin: 8px 0;
+  border-radius: 4px;
+}
+
+.notification.url-html-notification a {
+  color: #0078d4;
+  text-decoration: none;
+}
+
+.notification.url-html-notification a:hover {
+  text-decoration: underline;
+}
+
+.notification.url-html-notification hr {
+  border: none;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  margin: 12px 0;
+}
+
+.notification.url-html-notification code {
+  background: rgba(0, 0, 0, 0.05);
+  padding: 2px 4px;
+  border-radius: 4px;
+  font-family: "Consolas", "Monaco", monospace;
+  font-size: 0.9em;
+}
+
+.notification.url-html-notification pre {
+  background: rgba(0, 0, 0, 0.05);
+  padding: 12px;
+  border-radius: 4px;
+  overflow-x: auto;
+  margin: 8px 0;
+}
+
+.notification.url-html-notification pre code {
+  background: none;
+  padding: 0;
+}
+
+.notification.url-html-notification blockquote {
+  margin: 12px 0;
+  padding: 8px 16px;
+  border-right: 4px solid rgba(0, 0, 0, 0.1);
+  background: rgba(0, 0, 0, 0.02);
+}
+
+.notification.url-html-notification table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 12px 0;
+}
+
+.notification.url-html-notification th,
+.notification.url-html-notification td {
+  padding: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  text-align: right;
+}
+
+.notification.url-html-notification th {
+  background: rgba(0, 0, 0, 0.02);
+  font-weight: 600;
+}

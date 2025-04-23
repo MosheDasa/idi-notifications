@@ -1,6 +1,7 @@
 import { app, BrowserWindow } from "electron";
 import * as path from "path";
 import axios from "axios";
+import * as fs from "fs";
 import * as dotenv from "dotenv";
 import { config } from "./config";
 
@@ -14,21 +15,47 @@ if (!userId) {
   console.error("USERID or USERNAME environment variable is not set");
 }
 
-// Define environment variables interface
-interface EnvVars {
-  VITE_API_URL: string;
-  VITE_API_NOTIFICATIONS_ENDPOINT: string;
-  VITE_API_POLLING_INTERVAL: string;
-  [key: string]: string | undefined;
+interface ExternalConfig {
+  API_URL: string;
+  API_POLLING_INTERVAL: number;
+  LOG: boolean;
 }
 
-// Get environment variables with defaults
-const env: EnvVars = {
-  VITE_API_URL: process.env.VITE_API_URL || "http://localhost:3001",
-  VITE_API_NOTIFICATIONS_ENDPOINT:
-    process.env.VITE_API_NOTIFICATIONS_ENDPOINT || "/notifications/check",
-  VITE_API_POLLING_INTERVAL: process.env.VITE_API_POLLING_INTERVAL || "10000",
-};
+// Load configuration from external JSON file
+function loadExternalConfig(): ExternalConfig {
+  const defaultConfig: ExternalConfig = {
+    API_URL: "http://localhost:3001/notifications/check",
+    API_POLLING_INTERVAL: 10000,
+    LOG: false,
+  };
+
+  try {
+    const configPath = path.join(
+      "C:",
+      "Users",
+      userId!,
+      "idi-notifications-config.json"
+    );
+    console.log("Looking for config file at:", configPath);
+
+    if (fs.existsSync(configPath)) {
+      console.log("Loading config from:", configPath);
+      const data = fs.readFileSync(configPath, "utf8");
+      const config = JSON.parse(data);
+      console.log("Loaded config:", config);
+      return { ...defaultConfig, ...config };
+    } else {
+      console.log("Config file not found, using defaults");
+    }
+  } catch (error) {
+    console.error("Failed to load config:", error);
+  }
+
+  return defaultConfig;
+}
+
+// Load the configuration
+const externalConfig = loadExternalConfig();
 
 interface NotificationResponse {
   hasNotification: boolean;
@@ -53,28 +80,40 @@ function decodeText(text: string): string {
 
 async function checkForNotifications() {
   try {
-    console.log("Checking for notifications...");
+    if (externalConfig.LOG) {
+      console.log("Checking for notifications...");
+    }
+
     const response = await axios.get<NotificationResponse>(
-      `${config.api.baseUrl}${config.api.notificationsEndpoint}`,
+      externalConfig.API_URL,
       {
         params: {
           userId: userId,
         },
       }
     );
+
     const data = response.data;
-    console.log("Server response:", data);
+    if (externalConfig.LOG) {
+      console.log("Server response:", data);
+    }
 
     if (data.hasNotification && data.notification) {
-      console.log("Found new notification:", data.notification);
+      if (externalConfig.LOG) {
+        console.log("Found new notification:", data.notification);
+      }
 
       // בדיקה שזו לא התראה שכבר הוצגה
       if (data.notification.id === lastNotificationId) {
-        console.log("Notification already shown, skipping");
+        if (externalConfig.LOG) {
+          console.log("Notification already shown, skipping");
+        }
         return;
       }
 
-      console.log("Notification is new, showing it...");
+      if (externalConfig.LOG) {
+        console.log("Notification is new, showing it...");
+      }
       const { type, message } = data.notification;
 
       // Update the last shown notification ID
@@ -82,12 +121,14 @@ async function checkForNotifications() {
 
       // Send notification to renderer if window exists
       if (mainWindow) {
-        console.log("Sending notification to renderer:", { type, message });
+        if (externalConfig.LOG) {
+          console.log("Sending notification to renderer:", { type, message });
+        }
         mainWindow.webContents.send("show-notification", { type, message });
       } else {
-        console.log("Main window is not available");
+        console.error("Main window is not available");
       }
-    } else {
+    } else if (externalConfig.LOG) {
       console.log("No new notifications");
     }
   } catch (error) {
@@ -104,7 +145,7 @@ function startPolling() {
   // Start polling with configured interval
   pollingInterval = setInterval(
     checkForNotifications,
-    parseInt(env.VITE_API_POLLING_INTERVAL)
+    externalConfig.API_POLLING_INTERVAL
   );
 
   // Do an initial check immediately
@@ -119,10 +160,13 @@ function stopPolling() {
 }
 
 function createWindow() {
-  console.log("Creating window...");
+  if (externalConfig.LOG) {
+    console.log("Creating window...");
+  }
+
   mainWindow = new BrowserWindow({
-    width: config.window.width,
-    height: config.window.height,
+    width: 400,
+    height: 600,
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false,
@@ -140,7 +184,7 @@ function createWindow() {
 
   // Hide window if running in background mode
   const isBackground = process.argv.includes("--background");
-  if (isBackground) {
+  if (isBackground && externalConfig.LOG) {
     console.log("Running in background mode");
   }
 
@@ -148,7 +192,9 @@ function createWindow() {
 
   // Show window when ready (only if not in background mode)
   mainWindow.once("ready-to-show", () => {
-    console.log("Window ready to show");
+    if (externalConfig.LOG) {
+      console.log("Window ready to show");
+    }
     if (mainWindow) {
       mainWindow.show();
     }
@@ -158,22 +204,25 @@ function createWindow() {
   const { width, height } = mainWindow.getBounds();
   const { width: screenWidth, height: screenHeight } =
     require("electron").screen.getPrimaryDisplay().workAreaSize;
-  mainWindow.setPosition(
-    screenWidth - width - config.window.margin,
-    screenHeight - height - config.window.margin
-  );
+  mainWindow.setPosition(screenWidth - width - 20, screenHeight - height - 20);
 
   // Send CLI parameters to renderer (if any)
   const args = process.argv.slice(process.defaultApp ? 2 : 1);
-  console.log("CLI args:", args);
+  if (externalConfig.LOG) {
+    console.log("CLI args:", args);
+  }
 
   if (args.length >= 2) {
     const type = args[0].toUpperCase();
     const message = decodeText(args.slice(1).join(" "));
-    console.log("Preparing to send notification:", { type, message });
+    if (externalConfig.LOG) {
+      console.log("Preparing to send notification:", { type, message });
+    }
 
     const sendNotification = () => {
-      console.log("Window loaded, sending notification");
+      if (externalConfig.LOG) {
+        console.log("Window loaded, sending notification");
+      }
       if (mainWindow) {
         // בדיקה אם זו התראת URL_HTML
         if (type === "URL_HTML") {
@@ -214,7 +263,9 @@ function createWindow() {
 }
 
 app.whenReady().then(() => {
-  console.log("App ready, creating window");
+  if (externalConfig.LOG) {
+    console.log("App ready, creating window");
+  }
   createWindow();
 });
 

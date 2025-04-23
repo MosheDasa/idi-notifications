@@ -1,6 +1,6 @@
 {
   "name": "idi-notifications",
-  "version": "1.0.3",
+  "version": "1.0.6",
   "description": "Windows notification application using Electron",
   "author": "IDI",
   "main": "dist/main.js",
@@ -52,8 +52,8 @@
       "icon": "src/assets/icon.ico"
     },
     "nsis": {
-      "oneClick": false,
-      "allowToChangeInstallationDirectory": true,
+      "oneClick": true,
+      "allowToChangeInstallationDirectory": false,
       "createDesktopShortcut": false,
       "createStartMenuShortcut": true,
       "shortcutName": "IDI Notifications",

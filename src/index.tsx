@@ -5,12 +5,13 @@ import InfoNotification from "./components/info/InfoNotification";
 import ErrorNotification from "./components/error/ErrorNotification";
 import CoinsNotification from "./components/coins/CoinsNotification";
 import FreeHtmlNotification from "./components/free-html/FreeHtmlNotification";
+import UrlHtmlNotification from "./components/url-html/UrlHtmlNotification";
 import "./components/common/styles.css";
 import { ipcRenderer } from "electron";
 
 interface NotificationItem {
   id: string;
-  type: "INFO" | "ERROR" | "COINS" | "FREE_HTML";
+  type: "INFO" | "ERROR" | "COINS" | "FREE_HTML" | "URL_HTML";
   message: string;
 }
 
@@ -67,6 +68,14 @@ const App: React.FC = () => {
                 <FreeHtmlNotification
                   key={notification.id}
                   message={notification.message}
+                  onClose={() => removeNotification(notification.id)}
+                />
+              );
+            case "URL_HTML":
+              return (
+                <UrlHtmlNotification
+                  key={notification.id}
+                  url={notification.message}
                   onClose={() => removeNotification(notification.id)}
                 />
               );

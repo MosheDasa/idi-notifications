@@ -3,7 +3,6 @@ interface Config {
     baseUrl: string;
     notificationsEndpoint: string;
     pollingInterval: number;
-    userId: string;
   };
   notifications: {
     timeouts: {
@@ -51,7 +50,6 @@ export const config: Config = {
       "/notifications/check"
     ),
     pollingInterval: getEnvNumber("VITE_API_POLLING_INTERVAL", 10000),
-    userId: getEnvVar("VITE_USER_ID", ""),
   },
   notifications: {
     timeouts: {

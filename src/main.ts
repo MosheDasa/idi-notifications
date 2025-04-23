@@ -7,6 +7,13 @@ import { config } from "./config";
 // Load environment variables from .env file
 dotenv.config({ path: path.join(__dirname, "../.env") });
 
+// Get USERID from Windows environment variables
+const userId = process.env.USERID || process.env.USERNAME;
+console.log("userId", userId, process.env);
+if (!userId) {
+  console.error("USERID or USERNAME environment variable is not set");
+}
+
 // Define environment variables interface
 interface EnvVars {
   VITE_API_URL: string;
@@ -51,7 +58,7 @@ async function checkForNotifications() {
       `${config.api.baseUrl}${config.api.notificationsEndpoint}`,
       {
         params: {
-          userId: config.api.userId,
+          userId: userId,
         },
       }
     );

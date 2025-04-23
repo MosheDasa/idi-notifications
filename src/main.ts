@@ -27,30 +27,26 @@ async function checkForNotifications() {
   try {
     console.log("Checking for notifications...");
     const response = await axios.get<NotificationResponse>(
-      "http://localhost:3000/notifications/check"
+      "http://localhost:3001/notifications/check"
     );
     const data = response.data;
     console.log("Server response:", data);
 
     if (data.hasNotification && data.notification) {
       console.log("Found new notification:", data.notification);
-      // Check if we haven't shown this notification before
-      if (data.notification.id !== lastNotificationId) {
-        console.log("Notification is new, showing it...");
-        const { type, message } = data.notification;
 
-        // Update the last shown notification ID
-        lastNotificationId = data.notification.id;
+      console.log("Notification is new, showing it...");
+      const { type, message } = data.notification;
 
-        // Send notification to renderer if window exists
-        if (mainWindow) {
-          console.log("Sending notification to renderer:", { type, message });
-          mainWindow.webContents.send("show-notification", { type, message });
-        } else {
-          console.log("Main window is not available");
-        }
+      // Update the last shown notification ID
+      lastNotificationId = data.notification.id;
+
+      // Send notification to renderer if window exists
+      if (mainWindow) {
+        console.log("Sending notification to renderer:", { type, message });
+        mainWindow.webContents.send("show-notification", { type, message });
       } else {
-        console.log("Notification was already shown");
+        console.log("Main window is not available");
       }
     } else {
       console.log("No new notifications");

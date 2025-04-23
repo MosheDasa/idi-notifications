@@ -31,10 +31,10 @@ const CoinsNotification: React.FC<CoinsNotificationProps> = ({
         ×
       </button>
       <div className="coins-content">
+        <div className="main-text">{message}</div>
         <div className="main-text">הצלחת לצבור</div>
         <div className="amount-row">
           <span className="amount">1,000₪</span>
-          <span className="separator">כל</span>
           <div className="coins-icon">
             <FaCoins />
           </div>

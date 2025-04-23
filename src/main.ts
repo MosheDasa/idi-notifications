@@ -6,7 +6,7 @@ interface NotificationResponse {
   hasNotification: boolean;
   notification?: {
     id: string;
-    type: "INFO" | "ERROR" | "COINS" | "FREE_HTML";
+    type: "INFO" | "ERROR" | "COINS" | "FREE_HTML" | "URL_HTML";
     message: string;
   };
 }
@@ -130,7 +130,22 @@ function createWindow() {
     const sendNotification = () => {
       console.log("Window loaded, sending notification");
       if (mainWindow) {
-        mainWindow.webContents.send("show-notification", { type, message });
+        // בדיקה אם זו התראת URL_HTML
+        if (type === "URL_HTML") {
+          // וידוא שה-URL תקין
+          try {
+            new URL(message);
+            mainWindow.webContents.send("show-notification", { type, message });
+          } catch (err) {
+            console.error("Invalid URL provided:", message);
+            mainWindow.webContents.send("show-notification", {
+              type: "ERROR",
+              message: "כתובת URL לא תקינה",
+            });
+          }
+        } else {
+          mainWindow.webContents.send("show-notification", { type, message });
+        }
       }
     };
 

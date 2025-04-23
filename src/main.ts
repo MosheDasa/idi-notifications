@@ -252,6 +252,8 @@ function createWindow() {
     minimizable: false,
   });
 
+  mainWindow.setIgnoreMouseEvents(true);
+
   const isBackground = process.argv.includes("--background");
   if (isBackground) {
     mainWindow.hide();

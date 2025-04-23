@@ -1,4 +1,4 @@
-import { app, BrowserWindow } from "electron";
+import { app, BrowserWindow, ipcMain } from "electron";
 import * as path from "path";
 import axios from "axios";
 import * as fs from "fs";
@@ -10,9 +10,51 @@ dotenv.config({ path: path.join(__dirname, "../.env") });
 
 // Get USERID from Windows environment variables
 const userId = process.env.USERID || process.env.USERNAME;
-console.log("userId", userId, process.env);
+
 if (!userId) {
-  console.error("USERID or USERNAME environment variable is not set");
+  writeLog("ERROR", "ENV_VAR_MISSING", {
+    message: "USERID or USERNAME environment variable is not set",
+  });
+}
+
+// Logger setup
+const LOG_DIR = path.join(
+  "C:",
+  "Users",
+  userId!,
+  "idi-notifications-config",
+  "log"
+);
+const LOG_FILE = path.join(
+  LOG_DIR,
+  `idi-notifications-${new Date().toISOString().split("T")[0]}.log`
+);
+
+// Ensure log directory exists
+if (!fs.existsSync(LOG_DIR)) {
+  fs.mkdirSync(LOG_DIR, { recursive: true });
+}
+
+interface LogEntry {
+  timestamp: string;
+  severity: "INFO" | "ERROR" | "DEBUG" | "WARN";
+  event: string;
+  data?: any;
+}
+
+function writeLog(severity: LogEntry["severity"], event: string, data?: any) {
+  const entry: LogEntry = {
+    timestamp: new Date().toISOString(),
+    severity,
+    event,
+    data,
+  };
+
+  const logLine = `${entry.timestamp} severity="${entry.severity}" event="${
+    entry.event
+  }" ${data ? `data="${JSON.stringify(data).replace(/"/g, '\\"')}"` : ""}\n`;
+
+  fs.appendFileSync(LOG_FILE, logLine);
 }
 
 interface ExternalConfig {
@@ -36,21 +78,22 @@ function loadExternalConfig(): ExternalConfig {
       userId!,
       "idi-notifications-config.json"
     );
-    console.log("Looking for config file at:", configPath);
+    writeLog("INFO", "LOAD_CONFIG_ATTEMPT", { configPath });
 
     if (fs.existsSync(configPath)) {
-      console.log("Loading config from:", configPath);
+      writeLog("INFO", "LOAD_CONFIG_FILE", { configPath });
       const data = fs.readFileSync(configPath, "utf8");
       const config = JSON.parse(data);
-      console.log("Loaded config:", config);
+      writeLog("INFO", "CONFIG_LOADED", { config });
       return { ...defaultConfig, ...config };
     } else {
-      console.log("Config file not found, using defaults");
+      writeLog("WARN", "CONFIG_FILE_NOT_FOUND", { configPath });
     }
   } catch (error) {
-    console.error("Failed to load config:", error);
+    writeLog("ERROR", "CONFIG_LOAD_ERROR", { error: (error as Error).message });
   }
 
+  writeLog("INFO", "USING_DEFAULT_CONFIG", { config: defaultConfig });
   return defaultConfig;
 }
 
@@ -81,7 +124,7 @@ function decodeText(text: string): string {
 async function checkForNotifications() {
   try {
     if (externalConfig.LOG) {
-      console.log("Checking for notifications...");
+      writeLog("INFO", "CHECK_NOTIFICATIONS_START");
     }
 
     const response = await axios.get<NotificationResponse>(
@@ -95,74 +138,80 @@ async function checkForNotifications() {
 
     const data = response.data;
     if (externalConfig.LOG) {
-      console.log("Server response:", data);
+      writeLog("INFO", "NOTIFICATION_RESPONSE", { response: data });
     }
 
     if (data.hasNotification && data.notification) {
       if (externalConfig.LOG) {
-        console.log("Found new notification:", data.notification);
+        writeLog("INFO", "NEW_NOTIFICATION_FOUND", {
+          notification: data.notification,
+        });
       }
 
-      // בדיקה שזו לא התראה שכבר הוצגה
       if (data.notification.id === lastNotificationId) {
         if (externalConfig.LOG) {
-          console.log("Notification already shown, skipping");
+          writeLog("INFO", "DUPLICATE_NOTIFICATION_SKIPPED", {
+            notificationId: lastNotificationId,
+          });
         }
         return;
       }
 
       if (externalConfig.LOG) {
-        console.log("Notification is new, showing it...");
+        writeLog("INFO", "PROCESSING_NEW_NOTIFICATION", {
+          notification: data.notification,
+        });
       }
-      const { type, message } = data.notification;
 
-      // Update the last shown notification ID
+      const { type, message } = data.notification;
       lastNotificationId = data.notification.id;
 
-      // Send notification to renderer if window exists
       if (mainWindow) {
         if (externalConfig.LOG) {
-          console.log("Sending notification to renderer:", { type, message });
+          writeLog("INFO", "SENDING_NOTIFICATION_TO_RENDERER", {
+            type,
+            message,
+          });
         }
         mainWindow.webContents.send("show-notification", { type, message });
       } else {
-        console.error("Main window is not available");
+        writeLog("ERROR", "MAIN_WINDOW_NOT_AVAILABLE");
       }
     } else if (externalConfig.LOG) {
-      console.log("No new notifications");
+      writeLog("INFO", "NO_NEW_NOTIFICATIONS");
     }
   } catch (error) {
-    console.error("Failed to check for notifications:", error);
+    writeLog("ERROR", "NOTIFICATION_CHECK_ERROR", {
+      error: (error as Error).message,
+    });
   }
 }
 
 function startPolling() {
-  // Clear any existing interval
   if (pollingInterval) {
     clearInterval(pollingInterval);
   }
 
-  // Start polling with configured interval
+  writeLog("INFO", "STARTING_NOTIFICATION_POLLING", {
+    interval: externalConfig.API_POLLING_INTERVAL,
+  });
   pollingInterval = setInterval(
     checkForNotifications,
     externalConfig.API_POLLING_INTERVAL
   );
-
-  // Do an initial check immediately
   checkForNotifications();
 }
 
 function stopPolling() {
   if (pollingInterval) {
+    writeLog("INFO", "STOPPING_NOTIFICATION_POLLING");
     clearInterval(pollingInterval);
     pollingInterval = null;
   }
 }
 
 function createWindow() {
-  if (externalConfig.LOG) {
-    console.log("Creating window...");
-  }
+  writeLog("INFO", "CREATING_MAIN_WINDOW");
 
   mainWindow = new BrowserWindow({
     width: 400,
@@ -182,56 +231,43 @@ function createWindow() {
     minimizable: false,
   });
 
-  // Hide window if running in background mode
   const isBackground = process.argv.includes("--background");
-  if (isBackground && externalConfig.LOG) {
-    console.log("Running in background mode");
+  if (isBackground) {
+    writeLog("INFO", "RUNNING_IN_BACKGROUND_MODE");
   }
 
   mainWindow.loadFile(path.join(__dirname, "index.html"));
 
-  // Show window when ready (only if not in background mode)
   mainWindow.once("ready-to-show", () => {
-    if (externalConfig.LOG) {
-      console.log("Window ready to show");
-    }
+    writeLog("INFO", "WINDOW_READY");
     if (mainWindow) {
       mainWindow.show();
     }
   });
 
-  // Position the window in the bottom-right corner
   const { width, height } = mainWindow.getBounds();
   const { width: screenWidth, height: screenHeight } =
     require("electron").screen.getPrimaryDisplay().workAreaSize;
   mainWindow.setPosition(screenWidth - width - 20, screenHeight - height - 20);
 
-  // Send CLI parameters to renderer (if any)
   const args = process.argv.slice(process.defaultApp ? 2 : 1);
-  if (externalConfig.LOG) {
-    console.log("CLI args:", args);
-  }
+  writeLog("INFO", "CLI_ARGS_RECEIVED", { args });
 
   if (args.length >= 2) {
     const type = args[0].toUpperCase();
     const message = decodeText(args.slice(1).join(" "));
-    if (externalConfig.LOG) {
-      console.log("Preparing to send notification:", { type, message });
-    }
+    writeLog("INFO", "PREPARING_CLI_NOTIFICATION", { type, message });
 
     const sendNotification = () => {
-      if (externalConfig.LOG) {
-        console.log("Window loaded, sending notification");
-      }
+      writeLog("INFO", "SENDING_CLI_NOTIFICATION");
       if (mainWindow) {
-        // בדיקה אם זו התראת URL_HTML
         if (type === "URL_HTML") {
-          // וידוא שה-URL תקין
           try {
             new URL(message);
             mainWindow.webContents.send("show-notification", { type, message });
+            writeLog("INFO", "URL_HTML_NOTIFICATION_SENT", { url: message });
           } catch (err) {
-            console.error("Invalid URL provided:", message);
+            writeLog("ERROR", "INVALID_URL_PROVIDED", { url: message });
             mainWindow.webContents.send("show-notification", {
               type: "ERROR",
               message: "כתובת URL לא תקינה",
@@ -239,6 +275,7 @@ function createWindow() {
           }
         } else {
           mainWindow.webContents.send("show-notification", { type, message });
+          writeLog("INFO", "NOTIFICATION_SENT", { type, message });
         }
       }
     };
@@ -250,27 +287,32 @@ function createWindow() {
     }
   }
 
-  // Start polling for notifications when window is ready
   mainWindow.webContents.once("did-finish-load", () => {
     startPolling();
   });
 
-  // Stop polling when window is closed
   mainWindow.on("closed", () => {
     stopPolling();
     mainWindow = null;
+    writeLog("INFO", "WINDOW_CLOSED");
   });
 }
 
+// Add IPC handler for logging from renderer process
 app.whenReady().then(() => {
-  if (externalConfig.LOG) {
-    console.log("App ready, creating window");
-  }
+  ipcMain.on(
+    "write-log",
+    (_, severity: LogEntry["severity"], event: string, data?: any) => {
+      writeLog(severity, event, data);
+    }
+  );
+  writeLog("INFO", "APP_READY");
   createWindow();
 });
 
 app.on("window-all-closed", () => {
   stopPolling();
+  writeLog("INFO", "ALL_WINDOWS_CLOSED");
   if (process.platform !== "darwin") {
     app.quit();
   }

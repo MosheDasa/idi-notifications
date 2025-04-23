@@ -1,10 +1,11 @@
 import { contextBridge, ipcRenderer } from "electron";
+import { writeLog } from "./utils/logger";
 
 contextBridge.exposeInMainWorld("electron", {
   receive: (channel: string, func: (...args: any[]) => void) => {
-    console.log(`Setting up listener for channel: ${channel}`);
+    writeLog("INFO", "SETUP_CHANNEL_LISTENER", { channel });
     ipcRenderer.on(channel, (event, ...args) => {
-      console.log(`Received message on channel ${channel}:`, args);
+      writeLog("INFO", "CHANNEL_MESSAGE_RECEIVED", { channel, args });
       func(...args);
     });
   },

@@ -8,6 +8,7 @@ import FreeHtmlNotification from "./components/free-html/FreeHtmlNotification";
 import UrlHtmlNotification from "./components/url-html/UrlHtmlNotification";
 import "./components/common/styles.css";
 import { ipcRenderer } from "electron";
+import { writeLog } from "./utils/logger";
 
 interface NotificationItem {
   id: string;
@@ -19,9 +20,9 @@ const App: React.FC = () => {
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
 
   useEffect(() => {
-    console.log("Setting up IPC listener");
+    writeLog("INFO", "SETUP_IPC_LISTENER");
     ipcRenderer.on("show-notification", (_, data) => {
-      console.log("Received notification:", data);
+      writeLog("INFO", "NOTIFICATION_RECEIVED", { notification: data });
       const newNotification = {
         id: Date.now().toString(),
         type: data.type,
@@ -31,12 +32,13 @@ const App: React.FC = () => {
     });
 
     return () => {
+      writeLog("INFO", "CLEANUP_IPC_LISTENER");
       ipcRenderer.removeAllListeners("show-notification");
     };
   }, []);
 
   const removeNotification = (id: string) => {
-    console.log("Removing notification:", id);
+    writeLog("INFO", "REMOVE_NOTIFICATION", { id });
     setNotifications((prev) =>
       prev.filter((notification) => notification.id !== id)
     );

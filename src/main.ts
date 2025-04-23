@@ -4,6 +4,7 @@ import axios from "axios";
 import * as fs from "fs";
 import * as dotenv from "dotenv";
 import { config } from "./config";
+import * as os from "os";
 
 // Load environment variables from .env file
 dotenv.config({ path: path.join(__dirname, "../.env") });
@@ -63,39 +64,46 @@ interface ExternalConfig {
   LOG: boolean;
 }
 
-// Load configuration from external JSON file
-function loadExternalConfig(): ExternalConfig {
+const loadExternalConfig = (): ExternalConfig => {
   const defaultConfig: ExternalConfig = {
     API_URL: "http://localhost:3001/notifications/check",
     API_POLLING_INTERVAL: 10000,
-    LOG: false,
+    LOG: true,
   };
 
+  const configPath = path.join(
+    "C:",
+    "Users",
+    userId!,
+    "idi-notifications-config",
+    "config.json"
+  );
+
   try {
-    const configPath = path.join(
-      "C:",
-      "Users",
-      userId!,
-      "idi-notifications-config.json"
-    );
-    writeLog("INFO", "LOAD_CONFIG_ATTEMPT", { configPath });
+    // Ensure directory exists
+    const configDir = path.dirname(configPath);
+    if (!fs.existsSync(configDir)) {
+      fs.mkdirSync(configDir, { recursive: true });
+    }
 
     if (fs.existsSync(configPath)) {
-      writeLog("INFO", "LOAD_CONFIG_FILE", { configPath });
-      const data = fs.readFileSync(configPath, "utf8");
-      const config = JSON.parse(data);
-      writeLog("INFO", "CONFIG_LOADED", { config });
-      return { ...defaultConfig, ...config };
+      const configData = JSON.parse(fs.readFileSync(configPath, "utf8"));
+      return { ...defaultConfig, ...configData };
     } else {
-      writeLog("WARN", "CONFIG_FILE_NOT_FOUND", { configPath });
+      // Create new config file with default values
+      fs.writeFileSync(
+        configPath,
+        JSON.stringify(defaultConfig, null, 2),
+        "utf8"
+      );
+      console.log("Created new config file at:", configPath);
+      return defaultConfig;
     }
   } catch (error) {
-    writeLog("ERROR", "CONFIG_LOAD_ERROR", { error: (error as Error).message });
+    console.error("Error loading config:", error);
+    return defaultConfig;
   }
-
-  writeLog("INFO", "USING_DEFAULT_CONFIG", { config: defaultConfig });
-  return defaultConfig;
-}
+};
 
 // Load the configuration
 const externalConfig = loadExternalConfig();

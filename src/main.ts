@@ -254,14 +254,13 @@ function createWindow() {
 
   const isBackground = process.argv.includes("--background");
   if (isBackground) {
-    writeLog("INFO", "RUNNING_IN_BACKGROUND_MODE");
+    mainWindow.hide();
   }
 
   mainWindow.loadFile(path.join(__dirname, "index.html"));
 
   mainWindow.once("ready-to-show", () => {
-    writeLog("INFO", "WINDOW_READY");
-    if (mainWindow) {
+    if (!isBackground && mainWindow) {
       mainWindow.show();
     }
   });

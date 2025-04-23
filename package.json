@@ -1,16 +1,19 @@
 {
   "name": "idi-notifications",
-  "version": "1.0.0",
+  "version": "1.0.3",
   "description": "Windows notification application using Electron",
+  "author": "IDI",
   "main": "dist/main.js",
   "scripts": {
-    "start": "npm run build && chcp 65001 && electron .",
+    "start": "webpack --config webpack.config.js && electron .",
     "start:background": "electron . --background",
     "dev": "cross-env NODE_ENV=development npm run start",
     "build": "webpack --config webpack.config.js",
     "watch": "webpack --watch --config webpack.config.js",
     "clean": "rimraf dist",
-    "full-run": "npm run clean && npm run build && npm run start"
+    "full-run": "npm run clean && npm run build && npm run start",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder"
   },
   "dependencies": {
     "dotenv": "^16.5.0",
@@ -27,6 +30,7 @@
     "cross-env": "^7.0.3",
     "css-loader": "^6.7.0",
     "electron": "^25.0.0",
+    "electron-builder": "^26.0.12",
     "html-webpack-plugin": "^5.5.0",
     "rimraf": "^5.0.0",
     "style-loader": "^3.3.0",
@@ -35,5 +39,40 @@
     "wait-on": "^7.0.1",
     "webpack": "^5.80.0",
     "webpack-cli": "^5.0.0"
+  },
+  "build": {
+    "appId": "com.idi.notifications",
+    "productName": "IDI Notifications",
+    "directories": {
+      "output": "release",
+      "buildResources": "src/assets"
+    },
+    "win": {
+      "target": "nsis",
+      "icon": "src/assets/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": false,
+      "createStartMenuShortcut": true,
+      "shortcutName": "IDI Notifications",
+      "runAfterFinish": true,
+      "menuCategory": true,
+      "include": "build/installer.nsh",
+      "installerIcon": "src/assets/icon.ico",
+      "uninstallerIcon": "src/assets/icon.ico"
+    },
+    "files": [
+      "dist/**/*",
+      "package.json",
+      "src/assets/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "src/assets",
+        "to": "assets"
+      }
+    ]
   }
 }

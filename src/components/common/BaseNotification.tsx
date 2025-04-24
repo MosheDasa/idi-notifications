@@ -25,16 +25,24 @@ const BaseNotification: React.FC<BaseNotificationProps> = ({
     }
   }, [onClose, isPermanent, displayTime]);
 
+  const handleClose = () => {
+    if (onClose) {
+      onClose();
+    }
+    // Send message to close the window
+    window.postMessage("close-notification", "*");
+  };
+
   return (
     <motion.div
       className={`notification ${className}`}
-      initial={{ opacity: 0, y: 50 }}
+      initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: 50 }}
+      exit={{ opacity: 0, y: -20 }}
       transition={{ duration: 0.3 }}
     >
       {children}
-      <button className="close-button" onClick={onClose}>
+      <button className="close-button" onClick={handleClose}>
         ×
       </button>
     </motion.div>

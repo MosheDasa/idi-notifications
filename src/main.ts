@@ -240,12 +240,34 @@ function connectWebSocket() {
             "show-notification",
             notification
           );
+
+          // Listen for close button click
+          if (notificationWindow) {
+            notificationWindow.webContents.executeJavaScript(`
+              window.addEventListener('message', (event) => {
+                if (event.data === 'close-notification') {
+                  window.close();
+                }
+              });
+            `);
+          }
         });
       } else {
         notificationWindow.webContents.send("show-notification", notification);
+
+        // Listen for close button click
+        if (notificationWindow) {
+          notificationWindow.webContents.executeJavaScript(`
+            window.addEventListener('message', (event) => {
+              if (event.data === 'close-notification') {
+                window.close();
+              }
+            });
+          `);
+        }
       }
 
-      // Only close permanent notifications when explicitly closed by user
+      // Close window after display time for non-permanent notifications
       if (!notification.isPermanent) {
         setTimeout(() => {
           if (notificationWindow) {

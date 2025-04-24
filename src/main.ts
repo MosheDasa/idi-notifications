@@ -245,7 +245,7 @@ function connectWebSocket() {
         notificationWindow.webContents.send("show-notification", notification);
       }
 
-      // If not permanent, close window after display time
+      // Only close permanent notifications when explicitly closed by user
       if (!notification.isPermanent) {
         setTimeout(() => {
           if (notificationWindow) {

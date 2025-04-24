@@ -4,8 +4,9 @@
 
 .notification-container {
   position: fixed;
-  bottom: var(--notification-position-bottom, 20px);
-  right: var(--notification-position-right, 20px);
+  top: 10px;
+  right: 0;
+  bottom: 10px;
   display: flex;
   flex-direction: column-reverse;
   gap: var(--notification-gap, 10px);
@@ -13,7 +14,10 @@
   min-width: 0;
   min-height: 0;
   width: auto;
-  height: auto;
+  height: calc(100% - 20px);
+  padding: 0 20px;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .notification {
@@ -29,6 +33,7 @@
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
     Arial, sans-serif;
   pointer-events: auto;
+  margin-left: auto;
 }
 
 .notification .notification-content {

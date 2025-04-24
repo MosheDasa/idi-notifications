@@ -136,9 +136,12 @@ let lastNotificationId: string | null = null;
 function createNotificationWindow(): BrowserWindow {
   writeLog("INFO", "CREATING_NOTIFICATION_WINDOW");
 
+  const { height: screenHeight } =
+    require("electron").screen.getPrimaryDisplay().workAreaSize;
+
   notificationWindow = new BrowserWindow({
     width: 400,
-    height: 600,
+    height: screenHeight,
     show: false,
     frame: false,
     transparent: true,
@@ -154,13 +157,10 @@ function createNotificationWindow(): BrowserWindow {
 
   notificationWindow.once("ready-to-show", () => {
     if (notificationWindow) {
-      const { width, height } = notificationWindow.getBounds();
-      const { width: screenWidth, height: screenHeight } =
+      const { width } = notificationWindow.getBounds();
+      const { width: screenWidth } =
         require("electron").screen.getPrimaryDisplay().workAreaSize;
-      notificationWindow.setPosition(
-        screenWidth - width - 20,
-        screenHeight - height - 20
-      );
+      notificationWindow.setPosition(screenWidth - width - 20, 0);
       notificationWindow.show();
 
       // Make sure the window is visible and interactive

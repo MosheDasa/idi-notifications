@@ -16,11 +16,13 @@
     "dist": "electron-builder"
   },
   "dependencies": {
+    "@types/ws": "^8.18.1",
     "dotenv": "^16.5.0",
     "framer-motion": "^10.16.4",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "react-icons": "^5.5.0"
+    "react-icons": "^5.5.0",
+    "ws": "^8.18.1"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",

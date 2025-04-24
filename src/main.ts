@@ -5,6 +5,7 @@ import * as fs from "fs";
 import * as dotenv from "dotenv";
 import { config } from "./config";
 import * as os from "os";
+import WebSocket from "ws";
 
 // Load environment variables from .env file
 dotenv.config({ path: path.join(__dirname, "../.env") });
@@ -127,221 +128,164 @@ interface ProcessedNotification {
   displayTime?: number;
 }
 
-let mainWindow: BrowserWindow | null = null;
+// WebSocket connection
+let ws: WebSocket | null = null;
+let notificationWindow: BrowserWindow | null = null;
 let lastNotificationId: string | null = null;
-let pollingInterval: NodeJS.Timeout | null = null;
 
-function decodeText(text: string): string {
-  try {
-    return decodeURIComponent(escape(text));
-  } catch {
-    return text;
-  }
-}
+function createNotificationWindow(): BrowserWindow {
+  writeLog("INFO", "CREATING_NOTIFICATION_WINDOW");
 
-async function checkForNotifications() {
-  try {
-    if (externalConfig.LOG) {
-      writeLog("INFO", "CHECK_NOTIFICATIONS_START");
-    }
-
-    const response = await axios.get<NotificationResponse>(
-      externalConfig.API_URL,
-      {
-        params: { userId },
-      }
-    );
-
-    const data = response.data;
-    writeLog("DEBUG", "RAW_NOTIFICATION_DATA", { data });
-
-    if (data.hasNotification && data.notification) {
-      const notification = data.notification;
-
-      if (notification.id === lastNotificationId) {
-        writeLog("INFO", "DUPLICATE_NOTIFICATION_SKIPPED", {
-          notificationId: lastNotificationId,
-          notification,
-        });
-        return;
-      }
-
-      writeLog("DEBUG", "ORIGINAL_NOTIFICATION_VALUES", {
-        isPermanent: notification.isPermanent,
-        type: typeof notification.isPermanent,
-        displayTime: notification.displayTime,
-      });
-
-      const notificationData: ProcessedNotification = {
-        type: notification.type,
-        message: notification.message,
-        id: notification.id,
-        isPermanent: true,
-        displayTime: undefined,
-      };
-
-      if (notification.isPermanent === false) {
-        notificationData.isPermanent = false;
-        notificationData.displayTime = notification.displayTime || 5000;
-      }
-
-      writeLog("INFO", "PROCESSED_NOTIFICATION_DATA", {
-        original: notification,
-        processed: notificationData,
-      });
-
-      lastNotificationId = notification.id;
-
-      if (mainWindow) {
-        writeLog("DEBUG", "SENDING_TO_RENDERER", { notificationData });
-        mainWindow.webContents.send("show-notification", notificationData);
-      } else {
-        writeLog("ERROR", "MAIN_WINDOW_NOT_AVAILABLE");
-      }
-    } else {
-      writeLog("INFO", "NO_NEW_NOTIFICATIONS");
-    }
-  } catch (error) {
-    writeLog("ERROR", "NOTIFICATION_CHECK_ERROR", {
-      error: (error as Error).message,
-    });
-  }
-}
-
-function startPolling() {
-  if (pollingInterval) {
-    clearInterval(pollingInterval);
-  }
-
-  writeLog("INFO", "STARTING_NOTIFICATION_POLLING", {
-    interval: externalConfig.API_POLLING_INTERVAL,
-  });
-  pollingInterval = setInterval(
-    checkForNotifications,
-    externalConfig.API_POLLING_INTERVAL
-  );
-  checkForNotifications();
-}
-
-function stopPolling() {
-  if (pollingInterval) {
-    writeLog("INFO", "STOPPING_NOTIFICATION_POLLING");
-    clearInterval(pollingInterval);
-    pollingInterval = null;
-  }
-}
-
-function createWindow() {
-  writeLog("INFO", "CREATING_MAIN_WINDOW");
-
-  mainWindow = new BrowserWindow({
+  notificationWindow = new BrowserWindow({
     width: 400,
     height: 600,
-    webPreferences: {
-      nodeIntegration: true,
-      contextIsolation: false,
-    },
+    show: false,
     frame: false,
     transparent: true,
     alwaysOnTop: true,
     skipTaskbar: true,
-    show: false,
-    focusable: false,
-    resizable: false,
-    maximizable: false,
-    minimizable: false,
+    webPreferences: {
+      nodeIntegration: true,
+      contextIsolation: false,
+    },
   });
 
-  mainWindow.setIgnoreMouseEvents(true);
+  notificationWindow.loadFile(path.join(__dirname, "index.html"));
 
-  const isBackground = process.argv.includes("--background");
-  if (isBackground) {
-    mainWindow.hide();
-  }
+  notificationWindow.once("ready-to-show", () => {
+    if (notificationWindow) {
+      const { width, height } = notificationWindow.getBounds();
+      const { width: screenWidth, height: screenHeight } =
+        require("electron").screen.getPrimaryDisplay().workAreaSize;
+      notificationWindow.setPosition(
+        screenWidth - width - 20,
+        screenHeight - height - 20
+      );
+      notificationWindow.show();
 
-  mainWindow.loadFile(path.join(__dirname, "index.html"));
-
-  mainWindow.once("ready-to-show", () => {
-    if (!isBackground && mainWindow) {
-      mainWindow.show();
+      // Make sure the window is visible and interactive
+      notificationWindow.setVisibleOnAllWorkspaces(true);
+      notificationWindow.focus();
     }
   });
 
-  const { width, height } = mainWindow.getBounds();
-  const { width: screenWidth, height: screenHeight } =
-    require("electron").screen.getPrimaryDisplay().workAreaSize;
-  mainWindow.setPosition(screenWidth - width - 20, screenHeight - height - 20);
-
-  const args = process.argv.slice(process.defaultApp ? 2 : 1);
-  writeLog("INFO", "CLI_ARGS_RECEIVED", { args });
-
-  if (args.length >= 2) {
-    const type = args[0].toUpperCase();
-    const message = decodeText(args.slice(1).join(" "));
-    writeLog("INFO", "PREPARING_CLI_NOTIFICATION", { type, message });
-
-    const sendNotification = () => {
-      writeLog("INFO", "SENDING_CLI_NOTIFICATION");
-      if (mainWindow) {
-        if (type === "URL_HTML") {
-          try {
-            new URL(message);
-            mainWindow.webContents.send("show-notification", { type, message });
-            writeLog("INFO", "URL_HTML_NOTIFICATION_SENT", { url: message });
-          } catch (err) {
-            writeLog("ERROR", "INVALID_URL_PROVIDED", { url: message });
-            mainWindow.webContents.send("show-notification", {
-              type: "ERROR",
-              message: "כתובת URL לא תקינה",
+  // Wait for window to be fully loaded before setting up mouse events
+  notificationWindow.webContents.once("did-finish-load", () => {
+    if (notificationWindow) {
+      // Allow mouse events for the notification container
+      notificationWindow.webContents
+        .executeJavaScript(
+          `
+        try {
+          document.body.style.pointerEvents = 'none';
+          const container = document.querySelector('.notification-container');
+          if (container) {
+            container.style.pointerEvents = 'auto';
+            container.style.zIndex = '1000';
+            // Make sure close button is clickable
+            const closeButtons = container.querySelectorAll('.close-button');
+            closeButtons.forEach(button => {
+              button.style.pointerEvents = 'auto';
+              button.style.zIndex = '1001';
             });
           }
-        } else {
-          mainWindow.webContents.send("show-notification", { type, message });
-          writeLog("INFO", "NOTIFICATION_SENT", { type, message });
+        } catch (error) {
+          console.error('Error setting pointer events:', error);
         }
-      }
-    };
-
-    if (mainWindow.webContents.isLoading()) {
-      mainWindow.webContents.once("did-finish-load", sendNotification);
-    } else {
-      sendNotification();
+      `
+        )
+        .catch((error) => {
+          writeLog("ERROR", "JAVASCRIPT_EXECUTION_ERROR", {
+            error: error.message,
+          });
+        });
     }
-  }
-
-  mainWindow.webContents.once("did-finish-load", () => {
-    startPolling();
   });
 
-  mainWindow.on("closed", () => {
-    stopPolling();
-    mainWindow = null;
-    writeLog("INFO", "WINDOW_CLOSED");
+  notificationWindow.on("closed", () => {
+    notificationWindow = null;
+    writeLog("INFO", "NOTIFICATION_WINDOW_CLOSED");
+  });
+
+  return notificationWindow;
+}
+
+function connectWebSocket() {
+  if (ws) {
+    ws.close();
+  }
+
+  ws = new WebSocket(`ws://localhost:3001?userId=${userId}`);
+
+  ws.on("open", () => {
+    writeLog("INFO", "WEBSOCKET_CONNECTED");
+  });
+
+  ws.on("message", (data: WebSocket.Data) => {
+    try {
+      const notification = JSON.parse(data.toString());
+      writeLog("DEBUG", "WEBSOCKET_NOTIFICATION_RECEIVED", { notification });
+
+      lastNotificationId = notification.id;
+
+      // Create notification window if it doesn't exist
+      if (!notificationWindow) {
+        notificationWindow = createNotificationWindow();
+      }
+
+      // Wait for window to be ready before sending notification
+      if (notificationWindow.webContents.isLoading()) {
+        notificationWindow.webContents.once("did-finish-load", () => {
+          notificationWindow?.webContents.send(
+            "show-notification",
+            notification
+          );
+        });
+      } else {
+        notificationWindow.webContents.send("show-notification", notification);
+      }
+
+      // If not permanent, close window after display time
+      if (!notification.isPermanent) {
+        setTimeout(() => {
+          if (notificationWindow) {
+            notificationWindow.close();
+            notificationWindow = null;
+          }
+        }, notification.displayTime || 5000);
+      }
+    } catch (error) {
+      writeLog("ERROR", "WEBSOCKET_MESSAGE_ERROR", {
+        error: (error as Error).message,
+      });
+    }
+  });
+
+  ws.on("error", (error: Error) => {
+    writeLog("ERROR", "WEBSOCKET_ERROR", { error: error.message });
+  });
+
+  ws.on("close", () => {
+    writeLog("INFO", "WEBSOCKET_CLOSED");
+    // Try to reconnect after 5 seconds
+    setTimeout(connectWebSocket, 5000);
   });
 }
 
-// Add IPC handler for logging from renderer process
+// Start WebSocket connection when app is ready
 app.whenReady().then(() => {
-  ipcMain.on(
-    "write-log",
-    (_, severity: LogEntry["severity"], event: string, data?: any) => {
-      writeLog(severity, event, data);
-    }
-  );
   writeLog("INFO", "APP_READY");
-  createWindow();
+  connectWebSocket();
 });
 
 app.on("window-all-closed", () => {
-  stopPolling();
+  // Don't quit the app when all windows are closed
+  // Keep the WebSocket connection alive
   writeLog("INFO", "ALL_WINDOWS_CLOSED");
-  if (process.platform !== "darwin") {
-    app.quit();
-  }
 });
 
 app.on("activate", () => {
-  if (BrowserWindow.getAllWindows().length === 0) {
-    createWindow();
+  if (!ws) {
+    connectWebSocket();
   }
 });

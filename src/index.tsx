@@ -43,9 +43,16 @@ const App: React.FC = () => {
 
   const removeNotification = (id: string) => {
     writeLog("INFO", "REMOVE_NOTIFICATION", { id });
-    setNotifications((prev) =>
-      prev.filter((notification) => notification.id !== id)
-    );
+    setNotifications((prev) => {
+      const newNotifications = prev.filter(
+        (notification) => notification.id !== id
+      );
+      // If no notifications left, close the window
+      if (newNotifications.length === 0) {
+        window.close();
+      }
+      return newNotifications;
+    });
   };
 
   return notifications.length > 0 ? (
@@ -64,7 +71,10 @@ const App: React.FC = () => {
                 <CoinsNotification
                   key={notification.id}
                   message={notification.message}
-                  {...commonProps}
+                  isPermanent={notification.isPermanent || false}
+                  displayTime={notification.displayTime}
+                  onClose={() => removeNotification(notification.id)}
+                  id={notification.id}
                 />
               );
             case "INFO":
@@ -72,7 +82,10 @@ const App: React.FC = () => {
                 <InfoNotification
                   key={notification.id}
                   message={notification.message}
-                  {...commonProps}
+                  isPermanent={notification.isPermanent || false}
+                  displayTime={notification.displayTime}
+                  onClose={() => removeNotification(notification.id)}
+                  id={notification.id}
                 />
               );
             case "FREE_HTML":
@@ -80,7 +93,10 @@ const App: React.FC = () => {
                 <FreeHtmlNotification
                   key={notification.id}
                   message={notification.message}
-                  {...commonProps}
+                  isPermanent={notification.isPermanent || false}
+                  displayTime={notification.displayTime}
+                  onClose={() => removeNotification(notification.id)}
+                  id={notification.id}
                 />
               );
             case "URL_HTML":
@@ -88,18 +104,26 @@ const App: React.FC = () => {
                 <UrlHtmlNotification
                   key={notification.id}
                   message={notification.message}
+                  isPermanent={notification.isPermanent || false}
+                  displayTime={notification.displayTime}
                   url={notification.message}
-                  {...commonProps}
+                  onClose={() => removeNotification(notification.id)}
+                  id={notification.id}
                 />
               );
-            default:
+            case "ERROR":
               return (
                 <ErrorNotification
                   key={notification.id}
                   message={notification.message}
-                  {...commonProps}
+                  isPermanent={notification.isPermanent || false}
+                  displayTime={notification.displayTime}
+                  onClose={() => removeNotification(notification.id)}
+                  id={notification.id}
                 />
               );
+            default:
+              return null;
           }
         })}
       </AnimatePresence>

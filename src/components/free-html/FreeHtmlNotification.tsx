@@ -4,13 +4,16 @@ import BaseNotification, {
 } from "../common/BaseNotification";
 
 interface FreeHtmlNotificationProps
-  extends Omit<BaseNotificationProps, "className" | "children"> {}
+  extends Omit<BaseNotificationProps, "className" | "children"> {
+  id: string;
+}
 
 const FreeHtmlNotification: React.FC<FreeHtmlNotificationProps> = ({
   message,
   onClose,
   isPermanent,
   displayTime,
+  id,
 }) => {
   return (
     <BaseNotification
@@ -19,6 +22,7 @@ const FreeHtmlNotification: React.FC<FreeHtmlNotificationProps> = ({
       isPermanent={isPermanent}
       displayTime={displayTime}
       className="free-html-notification"
+      id={id}
     >
       <div
         className="notification-content"

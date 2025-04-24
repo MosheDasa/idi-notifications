@@ -5,13 +5,16 @@ import BaseNotification, {
 } from "../common/BaseNotification";
 
 interface ErrorNotificationProps
-  extends Omit<BaseNotificationProps, "className" | "children"> {}
+  extends Omit<BaseNotificationProps, "className" | "children"> {
+  id: string;
+}
 
 const ErrorNotification: React.FC<ErrorNotificationProps> = ({
   message,
   onClose,
   isPermanent,
   displayTime,
+  id,
 }) => {
   return (
     <BaseNotification
@@ -20,6 +23,7 @@ const ErrorNotification: React.FC<ErrorNotificationProps> = ({
       isPermanent={isPermanent}
       displayTime={displayTime}
       className="error-notification"
+      id={id}
     >
       <div className="notification-content">
         <div className="notification-icon">

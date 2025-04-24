@@ -9,6 +9,7 @@ export interface BaseNotificationProps {
   displayTime?: number;
   className?: string;
   children?: React.ReactNode;
+  id: string;
 }
 
 const BaseNotification: React.FC<BaseNotificationProps> = ({
@@ -17,6 +18,7 @@ const BaseNotification: React.FC<BaseNotificationProps> = ({
   displayTime,
   className = "",
   children,
+  id,
 }) => {
   useEffect(() => {
     if (!isPermanent && typeof displayTime === "number") {
@@ -36,6 +38,7 @@ const BaseNotification: React.FC<BaseNotificationProps> = ({
   return (
     <motion.div
       className={`notification ${className}`}
+      data-id={id}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}

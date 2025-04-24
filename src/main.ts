@@ -246,7 +246,13 @@ function connectWebSocket() {
             notificationWindow.webContents.executeJavaScript(`
               window.addEventListener('message', (event) => {
                 if (event.data === 'close-notification') {
-                  window.close();
+                  // Find and remove the specific notification
+                  const notifications = document.querySelectorAll('.notification');
+                  notifications.forEach(notification => {
+                    if (notification.getAttribute('data-id') === '${notification.id}') {
+                      notification.remove();
+                    }
+                  });
                 }
               });
             `);
@@ -260,19 +266,29 @@ function connectWebSocket() {
           notificationWindow.webContents.executeJavaScript(`
             window.addEventListener('message', (event) => {
               if (event.data === 'close-notification') {
-                window.close();
+                // Find and remove the specific notification
+                const notifications = document.querySelectorAll('.notification');
+                notifications.forEach(notification => {
+                  if (notification.getAttribute('data-id') === '${notification.id}') {
+                    notification.remove();
+                  }
+                });
               }
             });
           `);
         }
       }
 
-      // Close window after display time for non-permanent notifications
+      // Close specific notification after display time for non-permanent notifications
       if (!notification.isPermanent) {
         setTimeout(() => {
           if (notificationWindow) {
-            notificationWindow.close();
-            notificationWindow = null;
+            notificationWindow.webContents.executeJavaScript(`
+              const notification = document.querySelector('[data-id="${notification.id}"]');
+              if (notification) {
+                notification.remove();
+              }
+            `);
           }
         }, notification.displayTime || 5000);
       }

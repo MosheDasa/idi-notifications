@@ -5,13 +5,16 @@ import BaseNotification, {
 } from "../common/BaseNotification";
 
 interface InfoNotificationProps
-  extends Omit<BaseNotificationProps, "className" | "children"> {}
+  extends Omit<BaseNotificationProps, "className" | "children"> {
+  id: string;
+}
 
 const InfoNotification: React.FC<InfoNotificationProps> = ({
   message,
   onClose,
   isPermanent,
   displayTime,
+  id,
 }) => {
   return (
     <BaseNotification
@@ -20,6 +23,7 @@ const InfoNotification: React.FC<InfoNotificationProps> = ({
       isPermanent={isPermanent}
       displayTime={displayTime}
       className="info-notification"
+      id={id}
     >
       <div className="notification-content">
         <div className="notification-icon">

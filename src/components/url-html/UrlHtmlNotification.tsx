@@ -15,6 +15,7 @@ const UrlHtmlNotification: React.FC<UrlHtmlNotificationProps> = ({
   isPermanent,
   displayTime,
   url,
+  id,
 }) => {
   const [htmlContent, setHtmlContent] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
@@ -45,6 +46,7 @@ const UrlHtmlNotification: React.FC<UrlHtmlNotificationProps> = ({
         isPermanent={isPermanent}
         displayTime={displayTime}
         className="url-html-notification loading"
+        id={id}
       >
         <div className="notification-content">
           <div className="loading-spinner">Loading...</div>
@@ -61,6 +63,7 @@ const UrlHtmlNotification: React.FC<UrlHtmlNotificationProps> = ({
         isPermanent={isPermanent}
         displayTime={displayTime}
         className="url-html-notification error"
+        id={id}
       >
         <div className="notification-content">
           <div className="error-message">{error}</div>
@@ -76,6 +79,7 @@ const UrlHtmlNotification: React.FC<UrlHtmlNotificationProps> = ({
       isPermanent={isPermanent}
       displayTime={displayTime}
       className="url-html-notification"
+      id={id}
     >
       <div
         className="notification-content"

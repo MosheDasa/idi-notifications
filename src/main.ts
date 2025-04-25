@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain } from "electron";
+import { app, BrowserWindow, ipcMain, powerMonitor } from "electron";
 import * as path from "path";
 import axios from "axios";
 import * as fs from "fs";
@@ -212,118 +212,162 @@ function createNotificationWindow(): BrowserWindow {
 
 function connectWebSocket() {
   if (ws) {
-    ws.close();
+    try {
+      ws.close();
+    } catch (error) {
+      writeLog("ERROR", "WEBSOCKET_CLOSE_ERROR", {
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
   }
 
-  ws = new WebSocket(`ws://localhost:3001?userId=${userId}`);
+  try {
+    ws = new WebSocket(`ws://localhost:3001?userId=${userId}`);
 
-  ws.on("open", () => {
-    writeLog("INFO", "WEBSOCKET_CONNECTED");
-  });
-
-  ws.on("message", (data: WebSocket.Data) => {
-    try {
-      const notification = JSON.parse(data.toString());
-      writeLog("DEBUG", "WEBSOCKET_NOTIFICATION_RECEIVED", { notification });
-
-      lastNotificationId = notification.id;
-
-      // Create notification window if it doesn't exist
-      if (!notificationWindow) {
-        notificationWindow = createNotificationWindow();
+    // Set up ping/pong manually
+    const pingInterval = setInterval(() => {
+      if (ws?.readyState === WebSocket.OPEN) {
+        ws.ping();
       }
+    }, 30000);
 
-      // Wait for window to be ready before sending notification
-      if (notificationWindow.webContents.isLoading()) {
-        notificationWindow.webContents.once("did-finish-load", () => {
-          notificationWindow?.webContents.send(
+    ws.on("open", () => {
+      writeLog("INFO", "WEBSOCKET_CONNECTED");
+      // Send initial ping to keep connection alive
+      ws?.ping();
+    });
+
+    ws.on("ping", () => {
+      writeLog("DEBUG", "WEBSOCKET_PING_RECEIVED");
+      ws?.pong();
+    });
+
+    ws.on("pong", () => {
+      writeLog("DEBUG", "WEBSOCKET_PONG_RECEIVED");
+    });
+
+    ws.on("message", (data: WebSocket.Data) => {
+      try {
+        const notification = JSON.parse(data.toString());
+        writeLog("DEBUG", "WEBSOCKET_NOTIFICATION_RECEIVED", { notification });
+
+        lastNotificationId = notification.id;
+
+        // Create notification window if it doesn't exist
+        if (!notificationWindow) {
+          notificationWindow = createNotificationWindow();
+        }
+
+        // Wait for window to be ready before sending notification
+        if (notificationWindow.webContents.isLoading()) {
+          notificationWindow.webContents.once("did-finish-load", () => {
+            notificationWindow?.webContents.send(
+              "show-notification",
+              notification
+            );
+          });
+        } else {
+          notificationWindow.webContents.send(
             "show-notification",
             notification
           );
-
-          // Listen for close button click
-          if (notificationWindow) {
-            notificationWindow.webContents.executeJavaScript(`
-              window.addEventListener('message', (event) => {
-                if (event.data === 'close-notification') {
-                  // Find and remove the specific notification
-                  const notifications = document.querySelectorAll('.notification');
-                  notifications.forEach(notification => {
-                    if (notification.getAttribute('data-id') === '${notification.id}') {
-                      notification.remove();
-                    }
-                  });
-                }
-              });
-            `);
-          }
-        });
-      } else {
-        notificationWindow.webContents.send("show-notification", notification);
-
-        // Listen for close button click
-        if (notificationWindow) {
-          notificationWindow.webContents.executeJavaScript(`
-            window.addEventListener('message', (event) => {
-              if (event.data === 'close-notification') {
-                // Find and remove the specific notification
-                const notifications = document.querySelectorAll('.notification');
-                notifications.forEach(notification => {
-                  if (notification.getAttribute('data-id') === '${notification.id}') {
-                    notification.remove();
-                  }
-                });
-              }
-            });
-          `);
         }
+
+        // Close specific notification after display time for non-permanent notifications
+        if (!notification.isPermanent) {
+          setTimeout(() => {
+            if (notificationWindow) {
+              notificationWindow.webContents.executeJavaScript(`
+                const notification = document.querySelector('[data-id="${notification.id}"]');
+                if (notification) {
+                  notification.remove();
+                }
+              `);
+            }
+          }, notification.displayTime || 5000);
+        }
+      } catch (error) {
+        writeLog("ERROR", "WEBSOCKET_MESSAGE_PROCESSING_ERROR", {
+          error: error instanceof Error ? error.message : String(error),
+        });
       }
+    });
 
-      // Close specific notification after display time for non-permanent notifications
-      if (!notification.isPermanent) {
-        setTimeout(() => {
-          if (notificationWindow) {
-            notificationWindow.webContents.executeJavaScript(`
-              const notification = document.querySelector('[data-id="${notification.id}"]');
-              if (notification) {
-                notification.remove();
-              }
-            `);
-          }
-        }, notification.displayTime || 5000);
-      }
-    } catch (error) {
-      writeLog("ERROR", "WEBSOCKET_MESSAGE_ERROR", {
-        error: (error as Error).message,
-      });
-    }
-  });
+    ws.on("error", (error: Error) => {
+      writeLog("ERROR", "WEBSOCKET_ERROR", { error: error.message });
+      // Try to reconnect immediately
+      setTimeout(connectWebSocket, 1000);
+    });
 
-  ws.on("error", (error: Error) => {
-    writeLog("ERROR", "WEBSOCKET_ERROR", { error: error.message });
-  });
-
-  ws.on("close", () => {
-    writeLog("INFO", "WEBSOCKET_CLOSED");
+    ws.on("close", () => {
+      writeLog("INFO", "WEBSOCKET_CLOSED");
+      clearInterval(pingInterval);
+      // Try to reconnect after 5 seconds
+      setTimeout(connectWebSocket, 5000);
+    });
+  } catch (error) {
+    writeLog("ERROR", "WEBSOCKET_CREATION_ERROR", {
+      error: error instanceof Error ? error.message : String(error),
+    });
     // Try to reconnect after 5 seconds
     setTimeout(connectWebSocket, 5000);
-  });
+  }
 }
 
-// Start WebSocket connection when app is ready
-app.whenReady().then(() => {
+// Handle power management events
+powerMonitor.on("suspend", () => {
+  writeLog("INFO", "SYSTEM_SUSPEND");
+  // Keep the app running during sleep
+  app.disableHardwareAcceleration();
+});
+
+powerMonitor.on("resume", () => {
+  writeLog("INFO", "SYSTEM_RESUME");
+  // Reconnect WebSocket after resume
+  if (!ws || ws.readyState !== WebSocket.OPEN) {
+    writeLog("INFO", "RECONNECTING_AFTER_RESUME");
+    connectWebSocket();
+  }
+});
+
+// Prevent system from going to sleep
+app.on("ready", () => {
   writeLog("INFO", "APP_READY");
+  // Prevent system from going to sleep by keeping it active
+  setInterval(() => {
+    powerMonitor.getSystemIdleTime();
+  }, 10000);
+  // Start WebSocket connection
   connectWebSocket();
 });
 
+// Keep the app running even when all windows are closed
 app.on("window-all-closed", () => {
-  // Don't quit the app when all windows are closed
-  // Keep the WebSocket connection alive
   writeLog("INFO", "ALL_WINDOWS_CLOSED");
+  // Don't quit the app, keep the WebSocket connection alive
 });
 
+// Reconnect WebSocket when app is activated
 app.on("activate", () => {
+  writeLog("INFO", "APP_ACTIVATED");
   if (!ws) {
     connectWebSocket();
   }
+});
+
+// Handle uncaught exceptions
+process.on("uncaughtException", (error) => {
+  writeLog("ERROR", "UNCAUGHT_EXCEPTION", {
+    error: error.message,
+    stack: error.stack,
+  });
+  // Don't crash the app, just log the error
+});
+
+// Handle unhandled promise rejections
+process.on("unhandledRejection", (reason, promise) => {
+  writeLog("ERROR", "UNHANDLED_REJECTION", {
+    reason: reason instanceof Error ? reason.message : String(reason),
+  });
+  // Don't crash the app, just log the error
 });

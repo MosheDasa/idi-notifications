@@ -6,7 +6,7 @@ import * as dotenv from "dotenv";
 import { config } from "./config";
 import * as os from "os";
 import WebSocket from "ws";
-import { playSound } from "./utils/sound";
+import { playSound, setNotificationWindow } from "./utils/sound";
 
 // Load environment variables from .env file
 dotenv.config({ path: path.join(__dirname, "../.env") });
@@ -154,6 +154,9 @@ function createNotificationWindow(): BrowserWindow {
     },
   });
 
+  // Set the notification window
+  setNotificationWindow(notificationWindow);
+
   notificationWindow.loadFile(path.join(__dirname, "index.html"));
 
   notificationWindow.once("ready-to-show", () => {
@@ -253,7 +256,7 @@ function connectWebSocket() {
         writeLog("DEBUG", "WEBSOCKET_NOTIFICATION_RECEIVED", { notification });
 
         // Play notification sound
-        playSound();
+        playSound(notification.type);
         lastNotificationId = notification.id;
 
         // Create notification window if it doesn't exist

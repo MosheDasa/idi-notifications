@@ -18,6 +18,7 @@ const CoinsNotification: React.FC<ChestCoinsNotificationProps> = ({
   isPermanent,
   displayTime,
   id,
+  message,
 }) => {
   return (
     <BaseNotification
@@ -30,7 +31,7 @@ const CoinsNotification: React.FC<ChestCoinsNotificationProps> = ({
     >
       <div className="chest-coins-content">
         <img src={chestImg} alt="תיבה" className="chest-img" />
-        <div className="chest-coins-title">וואו שירה!!</div>
+        <div className="chest-coins-title">וואו {message}!!</div>
         <div className="chest-coins-sub">הצלחת לצבור</div>
         <div className="chest-coins-amount-row">
           <span className="chest-coins-amount">₪{amount.toLocaleString()}</span>

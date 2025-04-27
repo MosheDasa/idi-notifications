@@ -16,6 +16,7 @@ interface NotificationItem {
   message: string;
   isPermanent?: boolean;
   displayTime?: number;
+  amount?: number;
 }
 
 const App: React.FC = () => {
@@ -31,6 +32,7 @@ const App: React.FC = () => {
         message: data.message,
         isPermanent: data.isPermanent ?? true,
         displayTime: data.displayTime,
+        amount: data.amount,
       };
       setNotifications((prev) => [...prev, newNotification]);
     });
@@ -69,7 +71,7 @@ const App: React.FC = () => {
             case "COINS":
               return (
                 <CoinsNotification
-                  amount={1111}
+                  amount={notification.amount ?? 0}
                   key={notification.id}
                   message={notification.message}
                   isPermanent={notification.isPermanent || false}

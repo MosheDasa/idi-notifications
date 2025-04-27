@@ -11,10 +11,17 @@ export function setNotificationWindow(window: any) {
 
 export function playSound(notificationType?: string) {
   try {
-    const soundDir = path.join(app.getAppPath(), "SOUND");
+    // First try the development path
+    let soundDir = path.join(app.getAppPath(), "SOUND");
+
+    // If not found, try the installed app path
+    if (!fs.existsSync(soundDir)) {
+      soundDir = path.join(process.resourcesPath, "SOUND");
+    }
 
     if (!fs.existsSync(soundDir)) {
-      fs.mkdirSync(soundDir, { recursive: true });
+      console.error("Sound directory not found in either location:", soundDir);
+      return;
     }
 
     let soundFile = "default.wav";

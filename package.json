@@ -1,6 +1,6 @@
 {
   "name": "idi-notifications",
-  "version": "1.0.6",
+  "version": "1.0.0",
   "description": "Windows notification application using Electron",
   "author": "IDI",
   "main": "dist/main.js",
@@ -76,6 +76,10 @@
       {
         "from": "src/assets",
         "to": "assets"
+      },
+      {
+        "from": "SOUND",
+        "to": "SOUND"
       }
     ]
   }

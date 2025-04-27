@@ -1,6 +1,6 @@
 {
   "name": "idi-notifications",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Windows notification application using Electron",
   "author": "IDI",
   "main": "dist/main.js",
@@ -10,10 +10,12 @@
     "dev": "cross-env NODE_ENV=development npm run start",
     "build": "webpack --config webpack.config.js",
     "watch": "webpack --watch --config webpack.config.js",
-    "clean": "rimraf dist",
+    "clean": "rimraf dist && rimraf release",
     "full-run": "npm run clean && npm run build && npm run start",
     "pack": "electron-builder --dir",
-    "dist": "electron-builder"
+    "dist": "electron-builder",
+    "dist:win": "electron-builder --win",
+    "prod": "npm run clean && npm run build && npm run dist:win"
   },
   "dependencies": {
     "@types/ws": "^8.18.1",

@@ -1,16 +1,19 @@
 import React from "react";
-import { FaCoins } from "react-icons/fa";
 import BaseNotification, {
   BaseNotificationProps,
 } from "../common/BaseNotification";
+import chestImg from "../../assets/chest.png";
+import coinsImg from "../../assets/coins.png";
+import "./styles.css";
 
-interface CoinsNotificationProps
+interface ChestCoinsNotificationProps
   extends Omit<BaseNotificationProps, "className" | "children"> {
+  amount: number;
   id: string;
 }
 
-const CoinsNotification: React.FC<CoinsNotificationProps> = ({
-  message,
+const CoinsNotification: React.FC<ChestCoinsNotificationProps> = ({
+  amount,
   onClose,
   isPermanent,
   displayTime,
@@ -18,16 +21,22 @@ const CoinsNotification: React.FC<CoinsNotificationProps> = ({
 }) => {
   return (
     <BaseNotification
-      message={message}
       onClose={onClose}
       isPermanent={isPermanent}
       displayTime={displayTime}
-      className="coins-notification"
+      className="chest-coins-notification"
+      message={`וואו שווה! הצלחת לצבור ${amount.toLocaleString()} שקלים`}
       id={id}
     >
-      <div className="notification-content">
-        <FaCoins className="notification-icon" />
-        <p>{message}</p>
+      <div className="chest-coins-content">
+        <img src={chestImg} alt="תיבה" className="chest-img" />
+        <div className="chest-coins-title">וואו שירה!!</div>
+        <div className="chest-coins-sub">הצלחת לצבור</div>
+        <div className="chest-coins-amount-row">
+          <span className="chest-coins-amount">₪{amount.toLocaleString()}</span>
+          <img src={coinsImg} alt="מטבעות" className="coins-img" />
+        </div>
+        <div className="chest-coins-footer">כל הכבוד לך!</div>
       </div>
     </BaseNotification>
   );

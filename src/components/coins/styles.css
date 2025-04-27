@@ -84,3 +84,67 @@
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
     Arial, sans-serif;
 }
+
+.chest-coins-notification {
+  width: 280px;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  padding: 20px 16px 16px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  font-family: inherit;
+  direction: rtl;
+}
+
+.chest-coins-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.chest-img {
+  width: 64px;
+  height: 64px;
+  margin-bottom: 8px;
+}
+
+.chest-coins-title {
+  font-size: 18px;
+  font-weight: bold;
+  color: #1c1f23;
+  margin-bottom: 4px;
+}
+
+.chest-coins-sub {
+  font-size: 15px;
+  color: #1c1f23;
+  margin-bottom: 8px;
+}
+
+.chest-coins-amount-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.chest-coins-amount {
+  font-size: 22px;
+  font-weight: bold;
+  color: #0078d4;
+}
+
+.coins-img {
+  width: 32px;
+  height: 32px;
+}
+
+.chest-coins-footer {
+  font-size: 14px;
+  color: #888;
+  margin-top: 4px;
+}

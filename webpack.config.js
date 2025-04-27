@@ -39,6 +39,15 @@ const rendererConfig = {
     path: path.resolve(__dirname, "dist"),
     filename: "renderer.js",
   },
+  module: {
+    rules: [
+      ...commonConfig.module.rules,
+      {
+        test: /\.(png|jpe?g|gif|svg)$/i,
+        type: "asset/resource",
+      },
+    ],
+  },
   plugins: [
     new HtmlWebpackPlugin({
       template: "./src/index.html",

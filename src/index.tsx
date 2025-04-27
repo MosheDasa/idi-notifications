@@ -69,6 +69,7 @@ const App: React.FC = () => {
             case "COINS":
               return (
                 <CoinsNotification
+                  amount={1111}
                   key={notification.id}
                   message={notification.message}
                   isPermanent={notification.isPermanent || false}

@@ -66,9 +66,14 @@ function showAboutDialog() {
     type: "info",
     title: "About IDI Notifications",
     message: "IDI Notifications",
-    detail: `Version: ${APP_VERSION}\nUser ID: ${
-      config.userId
-    }\nConnection Status: ${isConnected ? "Connected" : "Disconnected"}`,
+    detail: `Version: ${APP_VERSION}
+User ID: ${config.userId}
+Connection Status: ${isConnected ? "Connected" : "Disconnected"}
+
+Configuration:
+API URL: ${config.API_URL}
+API Polling Interval: ${config.API_POLLING_INTERVAL}ms
+Logging Enabled: ${config.LOG ? "Yes" : "No"}`,
     buttons: ["OK"],
   });
 }

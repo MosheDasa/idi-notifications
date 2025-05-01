@@ -4,6 +4,7 @@ import { writeLog } from "./logger";
 import { getWebSocket } from "./socket-manager";
 import { loadConfig } from "./config-manager";
 import { getNotificationWindow } from "./window-manager";
+import { playSound } from "./sound";
 
 let tray: Tray | null = null;
 let isConnected = false;
@@ -64,6 +65,10 @@ function sendTestNotification() {
   };
 
   try {
+    // Play notification sound first
+    playSound(testNotification.type);
+
+    // Then send the notification to the window
     window.webContents.send("show-notification", testNotification);
     writeLog("INFO", "TEST_NOTIFICATION_SENT");
   } catch (error) {

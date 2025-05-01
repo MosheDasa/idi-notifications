@@ -35,7 +35,7 @@ if (!gotTheLock) {
       await createTray();
 
       // Set up WebSocket connection with userId and config
-      connectWebSocket(config.userId, config);
+      connectWebSocket(config.USER_ID, config);
 
       // Set up power management
       setupPowerManagement();

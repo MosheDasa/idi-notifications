@@ -7,14 +7,18 @@ export interface Config {
   API_URL: string;
   API_POLLING_INTERVAL: number;
   LOG: boolean;
-  userId: string;
+  USER_ID: string;
+  USER_NAME: string;
+  OPEN_DEV_TOOLS: boolean;
 }
 
 const DEFAULT_CONFIG: Config = {
   API_URL: "http://localhost:3001/notifications/check",
   API_POLLING_INTERVAL: 10000,
   LOG: true,
-  userId: "97254",
+  USER_ID: "97254",
+  USER_NAME: "97254",
+  OPEN_DEV_TOOLS: false,
 };
 
 export function getConfigPath(): string {

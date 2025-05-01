@@ -29,7 +29,10 @@ export function createNotificationWindow(): BrowserWindow {
     // Set the notification window
     setNotificationWindow(notificationWindow);
 
-    notificationWindow.loadFile(path.join(__dirname, "index.html"));
+    // Load index.html
+    const indexPath = path.join(process.cwd(), "dist/index.html");
+    writeLog("DEBUG", "LOADING_INDEX_HTML", { path: indexPath });
+    notificationWindow.loadFile(indexPath);
 
     notificationWindow.once("ready-to-show", () => {
       if (notificationWindow) {
@@ -42,6 +45,27 @@ export function createNotificationWindow(): BrowserWindow {
         notificationWindow.setVisibleOnAllWorkspaces(true);
         notificationWindow.focus();
       }
+    });
+
+    // Handle window loading errors
+    notificationWindow.webContents.on(
+      "did-fail-load",
+      (event, errorCode, errorDescription) => {
+        writeLog("ERROR", "WINDOW_LOAD_FAILED", {
+          errorCode,
+          errorDescription,
+          path: indexPath,
+        });
+      }
+    );
+
+    // Prevent window from being closed
+    notificationWindow.on("close", (event) => {
+      event.preventDefault();
+      if (notificationWindow) {
+        notificationWindow.hide();
+      }
+      writeLog("INFO", "WINDOW_HIDDEN");
     });
 
     // Wait for window to be fully loaded before setting up mouse events
@@ -75,11 +99,6 @@ export function createNotificationWindow(): BrowserWindow {
             });
           });
       }
-    });
-
-    notificationWindow.on("closed", () => {
-      notificationWindow = null;
-      writeLog("INFO", "NOTIFICATION_WINDOW_CLOSED");
     });
 
     return notificationWindow;

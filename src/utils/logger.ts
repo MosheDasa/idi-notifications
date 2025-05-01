@@ -45,7 +45,7 @@ export function writeLog(
     console.error("Logger not initialized. Call initLogger first.");
     return;
   }
-
+  console.log("dasa log", severity, event, data);
   try {
     const entry: LogEntry = {
       timestamp: new Date().toISOString(),

@@ -5,6 +5,7 @@ import {
   createNotificationWindow,
   getNotificationWindow,
 } from "./window-manager";
+import { updateConnectionStatus } from "./tray-manager";
 
 export interface Notification {
   id: string;
@@ -42,6 +43,7 @@ export function connectWebSocket(userId: string): void {
 
     ws.on("open", () => {
       writeLog("INFO", "WEBSOCKET_CONNECTED");
+      updateConnectionStatus(true);
       // Send initial ping to keep connection alive
       ws?.ping();
     });
@@ -109,12 +111,14 @@ export function connectWebSocket(userId: string): void {
 
     ws.on("error", (error: Error) => {
       writeLog("ERROR", "WEBSOCKET_ERROR", { error: error.message });
+      updateConnectionStatus(false);
       // Try to reconnect immediately
       setTimeout(() => connectWebSocket(userId), 1000);
     });
 
     ws.on("close", () => {
       writeLog("INFO", "WEBSOCKET_CLOSED");
+      updateConnectionStatus(false);
       if (pingInterval) {
         clearInterval(pingInterval);
         pingInterval = null;
@@ -126,6 +130,7 @@ export function connectWebSocket(userId: string): void {
     writeLog("ERROR", "WEBSOCKET_CREATION_ERROR", {
       error: error instanceof Error ? error.message : String(error),
     });
+    updateConnectionStatus(false);
     // Try to reconnect after 5 seconds
     setTimeout(() => connectWebSocket(userId), 5000);
   }

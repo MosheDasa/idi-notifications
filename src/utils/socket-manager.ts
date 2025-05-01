@@ -1,4 +1,5 @@
-import WebSocket from "ws";
+import SockJS from "sockjs-client";
+import { Client, Message, Frame } from "@stomp/stompjs";
 import { writeLog } from "./logger";
 import { playSound } from "./sound";
 import {
@@ -17,132 +18,127 @@ export interface Notification {
   amount?: number;
 }
 
-let ws: WebSocket | null = null;
+let stompClient: Client | null = null;
 let lastNotificationId: string | null = null;
-let pingInterval: NodeJS.Timeout | null = null;
 let config: Config;
 
 export function connectWebSocket(userId: string, appConfig: Config): void {
   config = appConfig;
 
-  if (ws) {
+  if (stompClient) {
     try {
-      ws.close();
+      stompClient.deactivate();
     } catch (error) {
-      writeLog("ERROR", "WEBSOCKET_CLOSE_ERROR", {
+      writeLog("ERROR", "STOMP_DISCONNECT_ERROR", {
         error: error instanceof Error ? error.message : String(error),
       });
     }
   }
 
   try {
-    const wsUrl = config.API_URL.replace("http://", "ws://").replace(
-      "https://",
-      "wss://"
-    );
-    ws = new WebSocket(`${wsUrl}?userId=${userId}`);
+    const socket = new SockJS("http://localhost:8083/idiwebsocket");
+    stompClient = new Client({
+      webSocketFactory: () => socket,
+      connectHeaders: {
+        userId: userId,
+        env: "dev", // You might want to make this configurable
+      },
+      reconnectDelay: 5000,
+      heartbeatIncoming: config.API_POLLING_INTERVAL,
+      heartbeatOutgoing: config.API_POLLING_INTERVAL,
+    });
 
-    // Set up ping/pong manually
-    pingInterval = setInterval(() => {
-      if (ws?.readyState === WebSocket.OPEN) {
-        ws.ping();
-      }
-    }, config.API_POLLING_INTERVAL);
-
-    ws.on("open", () => {
-      writeLog("INFO", "WEBSOCKET_CONNECTED", { url: wsUrl });
+    stompClient.onConnect = () => {
+      writeLog("INFO", "STOMP_CONNECTED", {
+        url: "http://localhost:8083/idiwebsocket",
+      });
       updateConnectionStatus(true);
-      // Send initial ping to keep connection alive
-      ws?.ping();
-    });
 
-    ws.on("ping", () => {
-      writeLog("DEBUG", "WEBSOCKET_PING_RECEIVED");
-      ws?.pong();
-    });
+      // Subscribe to user-specific topic
+      stompClient?.subscribe(
+        `/topic/usertest.user-${userId}`,
+        (message: Message) => {
+          try {
+            const notification = JSON.parse(message.body) as Notification;
+            writeLog("DEBUG", "STOMP_NOTIFICATION_RECEIVED", { notification });
 
-    ws.on("pong", () => {
-      writeLog("DEBUG", "WEBSOCKET_PONG_RECEIVED");
-    });
+            // Play notification sound
+            playSound(notification.type);
+            lastNotificationId = notification.id;
 
-    ws.on("message", (data: WebSocket.Data) => {
-      try {
-        const notification = JSON.parse(data.toString()) as Notification;
-        writeLog("DEBUG", "WEBSOCKET_NOTIFICATION_RECEIVED", { notification });
+            // Get or create notification window
+            let notificationWindow = getNotificationWindow();
+            if (!notificationWindow) {
+              notificationWindow = createNotificationWindow();
+            }
 
-        // Play notification sound
-        playSound(notification.type);
-        lastNotificationId = notification.id;
+            // Make sure window is visible
+            if (notificationWindow && !notificationWindow.isVisible()) {
+              writeLog("INFO", "SHOWING_HIDDEN_WINDOW");
+              notificationWindow.show();
+              notificationWindow.focus();
+            }
 
-        // Get or create notification window
-        let notificationWindow = getNotificationWindow();
-        if (!notificationWindow) {
-          notificationWindow = createNotificationWindow();
-        }
-
-        // Make sure window is visible
-        if (notificationWindow && !notificationWindow.isVisible()) {
-          writeLog("INFO", "SHOWING_HIDDEN_WINDOW");
-          notificationWindow.show();
-          notificationWindow.focus();
-        }
-
-        // Wait for window to be ready before sending notification
-        if (notificationWindow) {
-          if (notificationWindow.webContents.isLoading()) {
-            notificationWindow.webContents.once("did-finish-load", () => {
-              notificationWindow?.webContents.send(
-                "show-notification",
-                notification
-              );
-            });
-          } else {
-            notificationWindow.webContents.send(
-              "show-notification",
-              notification
-            );
-          }
-
-          // Close specific notification after display time for non-permanent notifications
-          if (!notification.isPermanent) {
-            setTimeout(() => {
-              if (notificationWindow) {
-                notificationWindow.webContents.executeJavaScript(`
-                  const notification = document.querySelector('[data-id="${notification.id}"]');
-                  if (notification) {
-                    notification.remove();
-                  }
-                `);
+            // Wait for window to be ready before sending notification
+            if (notificationWindow) {
+              if (notificationWindow.webContents.isLoading()) {
+                notificationWindow.webContents.once("did-finish-load", () => {
+                  notificationWindow?.webContents.send(
+                    "show-notification",
+                    notification
+                  );
+                });
+              } else {
+                notificationWindow.webContents.send(
+                  "show-notification",
+                  notification
+                );
               }
-            }, notification.displayTime || config.API_POLLING_INTERVAL / 2);
+
+              // Close specific notification after display time for non-permanent notifications
+              if (!notification.isPermanent) {
+                setTimeout(() => {
+                  if (notificationWindow) {
+                    notificationWindow.webContents.executeJavaScript(`
+                    const notification = document.querySelector('[data-id="${notification.id}"]');
+                    if (notification) {
+                      notification.remove();
+                    }
+                  `);
+                  }
+                }, notification.displayTime || config.API_POLLING_INTERVAL / 2);
+              }
+            }
+          } catch (error) {
+            writeLog("ERROR", "STOMP_MESSAGE_PROCESSING_ERROR", {
+              error: error instanceof Error ? error.message : String(error),
+            });
           }
         }
-      } catch (error) {
-        writeLog("ERROR", "WEBSOCKET_MESSAGE_PROCESSING_ERROR", {
-          error: error instanceof Error ? error.message : String(error),
-        });
-      }
-    });
+      );
+    };
 
-    ws.on("error", (error: Error) => {
-      writeLog("ERROR", "WEBSOCKET_ERROR", { error: error.message });
+    stompClient.onStompError = (frame: Frame) => {
+      writeLog("ERROR", "STOMP_ERROR", { frame });
       updateConnectionStatus(false);
-      // Try to reconnect immediately
-      setTimeout(() => connectWebSocket(userId, config), 1000);
-    });
+    };
 
-    ws.on("close", () => {
-      writeLog("INFO", "WEBSOCKET_CLOSED");
+    stompClient.onWebSocketError = (error: Event) => {
+      writeLog("ERROR", "WEBSOCKET_ERROR", {
+        error: error instanceof Error ? error.message : String(error),
+      });
       updateConnectionStatus(false);
-      if (pingInterval) {
-        clearInterval(pingInterval);
-        pingInterval = null;
-      }
-      // Try to reconnect after 5 seconds
-      setTimeout(() => connectWebSocket(userId, config), 5000);
-    });
+    };
+
+    stompClient.onDisconnect = () => {
+      writeLog("INFO", "STOMP_DISCONNECTED");
+      updateConnectionStatus(false);
+    };
+
+    // Activate the client
+    stompClient.activate();
   } catch (error) {
-    writeLog("ERROR", "WEBSOCKET_CREATION_ERROR", {
+    writeLog("ERROR", "STOMP_CREATION_ERROR", {
       error: error instanceof Error ? error.message : String(error),
     });
     updateConnectionStatus(false);
@@ -151,6 +147,6 @@ export function connectWebSocket(userId: string, appConfig: Config): void {
   }
 }
 
-export function getWebSocket(): WebSocket | null {
-  return ws;
+export function getWebSocket(): Client | null {
+  return stompClient;
 }

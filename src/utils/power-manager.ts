@@ -9,9 +9,9 @@ export function setupPowerManagement(): void {
       const ws = getWebSocket();
       if (ws) {
         try {
-          ws.close();
+          ws.deactivate();
         } catch (error) {
-          writeLog("ERROR", "WEBSOCKET_CLOSE_ERROR", {
+          writeLog("ERROR", "STOMP_DISCONNECT_ERROR", {
             error: error instanceof Error ? error.message : String(error),
           });
         }

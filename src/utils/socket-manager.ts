@@ -66,17 +66,24 @@ export function connectWebSocket(userId: string): void {
         playSound(notification.type);
         lastNotificationId = notification.id;
 
-        // Create notification window if it doesn't exist
-        if (!getNotificationWindow()) {
-          createNotificationWindow();
+        // Get or create notification window
+        let notificationWindow = getNotificationWindow();
+        if (!notificationWindow) {
+          notificationWindow = createNotificationWindow();
+        }
+
+        // Make sure window is visible
+        if (notificationWindow && !notificationWindow.isVisible()) {
+          writeLog("INFO", "SHOWING_HIDDEN_WINDOW");
+          notificationWindow.show();
+          notificationWindow.focus();
         }
 
         // Wait for window to be ready before sending notification
-        const notificationWindow = getNotificationWindow();
         if (notificationWindow) {
           if (notificationWindow.webContents.isLoading()) {
             notificationWindow.webContents.once("did-finish-load", () => {
-              notificationWindow.webContents.send(
+              notificationWindow?.webContents.send(
                 "show-notification",
                 notification
               );

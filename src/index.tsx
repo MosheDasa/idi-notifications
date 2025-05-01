@@ -49,9 +49,10 @@ const App: React.FC = () => {
       const newNotifications = prev.filter(
         (notification) => notification.id !== id
       );
-      // If no notifications left, close the window
+      // If no notifications left, send event to main process
       if (newNotifications.length === 0) {
-        window.close();
+        writeLog("INFO", "NO_NOTIFICATIONS_LEFT");
+        ipcRenderer.send("no-notifications");
       }
       return newNotifications;
     });

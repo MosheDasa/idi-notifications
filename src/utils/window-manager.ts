@@ -22,6 +22,7 @@ export function createNotificationWindow(): BrowserWindow {
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false,
+      devTools: false,
     },
   });
 

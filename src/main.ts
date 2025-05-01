@@ -8,6 +8,7 @@ import {
   getNotificationWindow,
   showNotificationWindow,
   hideNotificationWindow,
+  createAboutWindow,
 } from "./utils/window-manager";
 import { createTray } from "./utils/tray-manager";
 
@@ -20,6 +21,11 @@ initLogger(config.LOG);
 // Now we can safely write logs
 writeLog("INFO", "APP_STARTING", { config });
 
+// Create a function to show the About window
+const showAboutWindow = () => {
+  createAboutWindow();
+};
+
 // Prevent multiple instances
 const gotTheLock = app.requestSingleInstanceLock();
 if (!gotTheLock) {
@@ -31,8 +37,8 @@ if (!gotTheLock) {
     try {
       writeLog("INFO", "APP_READY");
 
-      // Create tray icon
-      await createTray();
+      // Create tray icon with the showAboutWindow function
+      await createTray(showAboutWindow);
 
       // Set up WebSocket connection with userId and config
       connectWebSocket(config.userId, config);
@@ -53,6 +59,15 @@ if (!gotTheLock) {
       ipcMain.on("show-notification", () => {
         writeLog("INFO", "NOTIFICATION_RECEIVED");
         showNotificationWindow();
+      });
+
+      // Handle About window requests
+      ipcMain.on("get-about-data", (event) => {
+        writeLog("INFO", "ABOUT_DATA_REQUESTED");
+        event.reply("about-data", {
+          config,
+          version: app.getVersion(),
+        });
       });
     } catch (error) {
       writeLog("ERROR", "APP_INITIALIZATION_ERROR", {

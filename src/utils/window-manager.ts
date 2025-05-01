@@ -4,6 +4,7 @@ import { writeLog } from "./logger";
 import { setNotificationWindow } from "./sound";
 
 let notificationWindow: BrowserWindow | null = null;
+let aboutWindow: BrowserWindow | null = null;
 
 function getIndexHtmlPath(): string {
   // In development, use the dist directory in the project root
@@ -13,6 +14,42 @@ function getIndexHtmlPath(): string {
 
   // In production, use the resources directory
   return path.join(process.resourcesPath, "dist/index.html");
+}
+
+export function createAboutWindow(): BrowserWindow {
+  if (aboutWindow) {
+    aboutWindow.focus();
+    return aboutWindow;
+  }
+
+  aboutWindow = new BrowserWindow({
+    width: 400,
+    height: 500,
+    resizable: false,
+    minimizable: false,
+    maximizable: false,
+    title: "About IDI Notifications",
+    webPreferences: {
+      nodeIntegration: false,
+      contextIsolation: true,
+      devTools: !app.isPackaged,
+      preload: path.join(__dirname, "preload.js"),
+    },
+  });
+
+  const indexPath = getIndexHtmlPath();
+  aboutWindow.loadFile(indexPath, { hash: "about" }).catch((error) => {
+    writeLog("ERROR", "ABOUT_WINDOW_LOAD_ERROR", {
+      error: error instanceof Error ? error.message : String(error),
+      path: indexPath,
+    });
+  });
+
+  aboutWindow.on("closed", () => {
+    aboutWindow = null;
+  });
+
+  return aboutWindow;
 }
 
 export function createNotificationWindow(): BrowserWindow {
@@ -163,4 +200,8 @@ export function hideNotificationWindow() {
     writeLog("INFO", "HIDING_NOTIFICATION_WINDOW");
     notificationWindow.hide();
   }
+}
+
+export function getAboutWindow(): BrowserWindow | null {
+  return aboutWindow;
 }

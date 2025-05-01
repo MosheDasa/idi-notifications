@@ -7,20 +7,20 @@ contextBridge.exposeInMainWorld("electron", {
   ipcRenderer: {
     send: (channel: string, data: any) => {
       // whitelist channels
-      const validChannels = ["no-notifications"];
+      const validChannels = ["no-notifications", "get-about-data"];
       if (validChannels.includes(channel)) {
         ipcRenderer.send(channel, data);
       }
     },
     on: (channel: string, func: (...args: any[]) => void) => {
-      const validChannels = ["show-notification"];
+      const validChannels = ["show-notification", "about-data"];
       if (validChannels.includes(channel)) {
         // Strip event as it includes `sender` and other internal electron stuff
         ipcRenderer.on(channel, (event, ...args) => func(...args));
       }
     },
     removeAllListeners: (channel: string) => {
-      const validChannels = ["show-notification"];
+      const validChannels = ["show-notification", "about-data"];
       if (validChannels.includes(channel)) {
         ipcRenderer.removeAllListeners(channel);
       }

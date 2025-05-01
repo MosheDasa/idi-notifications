@@ -1,44 +1,90 @@
-import * as dotenv from "dotenv";
+import fs from "fs";
+import path from "path";
+import { app } from "electron";
 import { writeLog } from "./logger";
 
 export interface Config {
+  API_URL: string;
+  API_POLLING_INTERVAL: number;
+  LOG: boolean;
   userId: string;
-  logLevel: string;
-  logDirectory: string;
 }
 
-let config: Config | null = null;
+const DEFAULT_CONFIG: Config = {
+  API_URL: "http://localhost:3001/notifications/check",
+  API_POLLING_INTERVAL: 10000,
+  LOG: true,
+  userId: "97254",
+};
 
-export function loadConfig(): Config {
-  if (config) {
-    return config;
-  }
+function getConfigPath(): string {
+  return path.join(
+    process.env.USERPROFILE || "",
+    "idi-notifications-config",
+    "config.json"
+  );
+}
 
+function createDefaultConfig(configPath: string): void {
   try {
-    // Load environment variables
-    dotenv.config();
-
-    const userId = "97254"; // Hardcoded for now, should be replaced with process.env.USER_ID
-    if (!userId) {
-      throw new Error("USER_ID environment variable is not set");
+    // Ensure directory exists
+    const configDir = path.dirname(configPath);
+    if (!fs.existsSync(configDir)) {
+      fs.mkdirSync(configDir, { recursive: true });
     }
 
-    config = {
-      userId,
-      logLevel: process.env.LOG_LEVEL || "info",
-      logDirectory: process.env.LOG_DIRECTORY || "logs",
-    };
-
-    return config;
+    // Write default config
+    fs.writeFileSync(configPath, JSON.stringify(DEFAULT_CONFIG, null, 2));
+    writeLog("INFO", "DEFAULT_CONFIG_CREATED", { path: configPath });
   } catch (error) {
-    console.error("Failed to load configuration:", error);
-    process.exit(1);
+    writeLog("ERROR", "DEFAULT_CONFIG_CREATION_FAILED", {
+      error: error instanceof Error ? error.message : String(error),
+      path: configPath,
+    });
+    throw error;
   }
 }
 
-export function getConfig(): Config {
-  if (!config) {
-    return loadConfig();
+export function loadConfig(): Config {
+  try {
+    const configPath = getConfigPath();
+    writeLog("INFO", "LOADING_CONFIG", { path: configPath });
+
+    // If config doesn't exist, create default
+    if (!fs.existsSync(configPath)) {
+      writeLog("INFO", "CONFIG_NOT_FOUND", { path: configPath });
+      createDefaultConfig(configPath);
+    }
+
+    // Read and parse config
+    const configContent = fs.readFileSync(configPath, "utf-8");
+    const userConfig = JSON.parse(configContent);
+
+    // Merge with default config to ensure all fields exist
+    const config: Config = { ...DEFAULT_CONFIG, ...userConfig };
+
+    writeLog("INFO", "CONFIG_LOADED", { config });
+    return config;
+  } catch (error) {
+    writeLog("ERROR", "CONFIG_LOAD_FAILED", {
+      error: error instanceof Error ? error.message : String(error),
+    });
+    return DEFAULT_CONFIG;
   }
-  return config;
+}
+
+export function updateConfig(newConfig: Partial<Config>): void {
+  try {
+    const configPath = getConfigPath();
+    const currentConfig = loadConfig();
+    const updatedConfig = { ...currentConfig, ...newConfig };
+
+    fs.writeFileSync(configPath, JSON.stringify(updatedConfig, null, 2));
+    writeLog("INFO", "CONFIG_UPDATED", { config: updatedConfig });
+  } catch (error) {
+    writeLog("ERROR", "CONFIG_UPDATE_FAILED", {
+      error: error instanceof Error ? error.message : String(error),
+    });
+    throw error;
+  }
 }

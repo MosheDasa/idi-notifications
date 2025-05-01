@@ -6,6 +6,7 @@ import {
   getNotificationWindow,
 } from "./window-manager";
 import { updateConnectionStatus } from "./tray-manager";
+import { Config } from "./config-manager";
 
 export interface Notification {
   id: string;
@@ -19,8 +20,11 @@ export interface Notification {
 let ws: WebSocket | null = null;
 let lastNotificationId: string | null = null;
 let pingInterval: NodeJS.Timeout | null = null;
+let config: Config;
 
-export function connectWebSocket(userId: string): void {
+export function connectWebSocket(userId: string, appConfig: Config): void {
+  config = appConfig;
+
   if (ws) {
     try {
       ws.close();
@@ -32,17 +36,21 @@ export function connectWebSocket(userId: string): void {
   }
 
   try {
-    ws = new WebSocket(`ws://localhost:3001?userId=${userId}`);
+    const wsUrl = config.API_URL.replace("http://", "ws://").replace(
+      "https://",
+      "wss://"
+    );
+    ws = new WebSocket(`${wsUrl}?userId=${userId}`);
 
     // Set up ping/pong manually
     pingInterval = setInterval(() => {
       if (ws?.readyState === WebSocket.OPEN) {
         ws.ping();
       }
-    }, 30000);
+    }, config.API_POLLING_INTERVAL);
 
     ws.on("open", () => {
-      writeLog("INFO", "WEBSOCKET_CONNECTED");
+      writeLog("INFO", "WEBSOCKET_CONNECTED", { url: wsUrl });
       updateConnectionStatus(true);
       // Send initial ping to keep connection alive
       ws?.ping();
@@ -106,7 +114,7 @@ export function connectWebSocket(userId: string): void {
                   }
                 `);
               }
-            }, notification.displayTime || 5000);
+            }, notification.displayTime || config.API_POLLING_INTERVAL / 2);
           }
         }
       } catch (error) {
@@ -120,7 +128,7 @@ export function connectWebSocket(userId: string): void {
       writeLog("ERROR", "WEBSOCKET_ERROR", { error: error.message });
       updateConnectionStatus(false);
       // Try to reconnect immediately
-      setTimeout(() => connectWebSocket(userId), 1000);
+      setTimeout(() => connectWebSocket(userId, config), 1000);
     });
 
     ws.on("close", () => {
@@ -131,7 +139,7 @@ export function connectWebSocket(userId: string): void {
         pingInterval = null;
       }
       // Try to reconnect after 5 seconds
-      setTimeout(() => connectWebSocket(userId), 5000);
+      setTimeout(() => connectWebSocket(userId, config), 5000);
     });
   } catch (error) {
     writeLog("ERROR", "WEBSOCKET_CREATION_ERROR", {
@@ -139,7 +147,7 @@ export function connectWebSocket(userId: string): void {
     });
     updateConnectionStatus(false);
     // Try to reconnect after 5 seconds
-    setTimeout(() => connectWebSocket(userId), 5000);
+    setTimeout(() => connectWebSocket(userId, config), 5000);
   }
 }
 

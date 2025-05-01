@@ -14,11 +14,11 @@ import { createTray } from "./utils/tray-manager";
 // Load configuration first
 const config = loadConfig();
 
-// Initialize logger with the user ID
-initLogger(config.userId);
+// Initialize logger with configuration
+initLogger(config.LOG);
 
 // Now we can safely write logs
-writeLog("INFO", "APP_STARTING");
+writeLog("INFO", "APP_STARTING", { config });
 
 // Prevent multiple instances
 const gotTheLock = app.requestSingleInstanceLock();
@@ -34,8 +34,8 @@ if (!gotTheLock) {
       // Create tray icon
       await createTray();
 
-      // Set up WebSocket connection
-      connectWebSocket(config.userId);
+      // Set up WebSocket connection with userId and config
+      connectWebSocket(config.userId, config);
 
       // Set up power management
       setupPowerManagement();

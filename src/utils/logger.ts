@@ -1,65 +1,54 @@
+import { app } from "electron";
 import * as path from "path";
 import * as fs from "fs";
 
-export type LogSeverity = "INFO" | "ERROR" | "DEBUG" | "WARN";
+let isLoggingEnabled = false;
+let logFilePath: string;
 
-export interface LogEntry {
-  timestamp: string;
-  severity: LogSeverity;
-  event: string;
-  data?: unknown;
-}
+export function initLogger(enabled: boolean): void {
+  isLoggingEnabled = enabled;
 
-let LOG_FILE: string | null = null;
-
-export function initLogger(userId: string): void {
-  try {
-    const LOG_DIR = path.join(
-      "C:",
-      "Users",
-      userId,
-      "idi-notifications-config",
-      "log"
-    );
-    LOG_FILE = path.join(
-      LOG_DIR,
-      `idi-notifications-${new Date().toISOString().split("T")[0]}.log`
-    );
-
-    // Ensure log directory exists
-    if (!fs.existsSync(LOG_DIR)) {
-      fs.mkdirSync(LOG_DIR, { recursive: true });
+  if (isLoggingEnabled) {
+    // Set up log directory in user's app data
+    const logDir = path.join(app.getPath("userData"), "logs");
+    if (!fs.existsSync(logDir)) {
+      fs.mkdirSync(logDir, { recursive: true });
     }
-  } catch (error) {
-    console.error("Failed to initialize logger:", error);
-    process.exit(1);
+
+    // Create log file for this session
+    const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+    logFilePath = path.join(logDir, `idi-notifications-${timestamp}.log`);
   }
 }
 
 export function writeLog(
-  severity: LogSeverity,
+  level: "INFO" | "ERROR" | "DEBUG",
   event: string,
-  data?: unknown
+  data?: Record<string, any>
 ): void {
-  if (!LOG_FILE) {
-    console.error("Logger not initialized. Call initLogger first.");
-    return;
+  if (!isLoggingEnabled) return;
+
+  const timestamp = new Date().toISOString();
+  const logEntry = {
+    timestamp,
+    level,
+    event,
+    ...data,
+  };
+
+  const logString = JSON.stringify(logEntry);
+
+  // Write to file
+  if (logFilePath) {
+    fs.appendFileSync(logFilePath, logString + "\n");
   }
-  console.log("dasa log", severity, event, data);
-  try {
-    const entry: LogEntry = {
-      timestamp: new Date().toISOString(),
-      severity,
-      event,
-      data,
-    };
 
-    const logLine = `${entry.timestamp} severity="${entry.severity}" event="${
-      entry.event
-    }" ${data ? `data="${JSON.stringify(data).replace(/"/g, '\\"')}"` : ""}\n`;
-
-    fs.appendFileSync(LOG_FILE, logLine);
-  } catch (error) {
-    console.error("Failed to write log:", error);
+  // Also write to console in development
+  if (!app.isPackaged) {
+    if (level === "ERROR") {
+      console.error(logString);
+    } else {
+      console.log(logString);
+    }
   }
 }

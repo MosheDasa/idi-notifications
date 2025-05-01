@@ -1,6 +1,6 @@
 {
   "name": "idi-notifications",
-  "version": "1.0.1",
+  "version": "16.0.1",
   "description": "Windows notification application using Electron",
   "author": "IDI",
   "main": "dist/main.js",

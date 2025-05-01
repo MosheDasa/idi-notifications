@@ -2,22 +2,27 @@ const path = require("path");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 
 const commonConfig = {
-  mode: process.env.NODE_ENV === "production" ? "production" : "development",
+  mode: process.env.NODE_ENV || "development",
+  devtool: "source-map",
   module: {
     rules: [
       {
-        test: /\.(ts|tsx)$/,
-        exclude: /node_modules/,
+        test: /\.tsx?$/,
         use: "ts-loader",
+        exclude: /node_modules/,
       },
       {
         test: /\.css$/,
         use: ["style-loader", "css-loader"],
       },
+      {
+        test: /\.(png|svg|jpg|jpeg|gif|ico)$/i,
+        type: "asset/resource",
+      },
     ],
   },
   resolve: {
-    extensions: [".ts", ".tsx", ".js", ".jsx"],
+    extensions: [".tsx", ".ts", ".js"],
   },
 };
 
@@ -26,51 +31,34 @@ const mainConfig = {
   target: "electron-main",
   entry: "./src/main.ts",
   output: {
-    path: path.resolve(__dirname, "dist"),
     filename: "main.js",
+    path: path.resolve(__dirname, "dist"),
+  },
+};
+
+const preloadConfig = {
+  ...commonConfig,
+  target: "electron-preload",
+  entry: "./src/preload.ts",
+  output: {
+    filename: "preload.js",
+    path: path.resolve(__dirname, "dist"),
   },
 };
 
 const rendererConfig = {
   ...commonConfig,
-  target: "web",
+  target: "electron-renderer",
   entry: "./src/index.tsx",
   output: {
-    path: path.resolve(__dirname, "dist"),
     filename: "renderer.js",
-  },
-  module: {
-    rules: [
-      ...commonConfig.module.rules,
-      {
-        test: /\.(png|jpe?g|gif|svg)$/i,
-        type: "asset/resource",
-      },
-    ],
+    path: path.resolve(__dirname, "dist"),
   },
   plugins: [
     new HtmlWebpackPlugin({
       template: "./src/index.html",
-      filename: "index.html",
     }),
   ],
-  resolve: {
-    ...commonConfig.resolve,
-    fallback: {
-      path: false,
-      fs: false,
-    },
-  },
-  externals: {
-    electron: "commonjs electron",
-  },
-  devServer: {
-    static: {
-      directory: path.join(__dirname, "dist"),
-    },
-    compress: true,
-    port: 9000,
-  },
 };
 
-module.exports = [mainConfig, rendererConfig];
+module.exports = [mainConfig, preloadConfig, rendererConfig];

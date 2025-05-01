@@ -30,9 +30,10 @@ export function createNotificationWindow(): BrowserWindow {
       alwaysOnTop: true,
       skipTaskbar: true,
       webPreferences: {
-        nodeIntegration: true,
-        contextIsolation: false,
+        nodeIntegration: false,
+        contextIsolation: true,
         devTools: !app.isPackaged,
+        preload: path.join(__dirname, "preload.js"),
       },
     });
 
@@ -148,4 +149,18 @@ export function setNotificationWindowInstance(
   window: BrowserWindow | null
 ): void {
   notificationWindow = window;
+}
+
+export function showNotificationWindow() {
+  if (notificationWindow) {
+    writeLog("INFO", "SHOWING_NOTIFICATION_WINDOW");
+    notificationWindow.show();
+  }
+}
+
+export function hideNotificationWindow() {
+  if (notificationWindow) {
+    writeLog("INFO", "HIDING_NOTIFICATION_WINDOW");
+    notificationWindow.hide();
+  }
 }

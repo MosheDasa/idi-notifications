@@ -7,8 +7,19 @@ import CoinsNotification from "./components/coins/CoinsNotification";
 import FreeHtmlNotification from "./components/free-html/FreeHtmlNotification";
 import UrlHtmlNotification from "./components/url-html/UrlHtmlNotification";
 import "./components/common/styles.css";
-import { ipcRenderer } from "electron";
-import { writeLog } from "./utils/logger";
+
+// Add type declarations for the exposed electron API
+declare global {
+  interface Window {
+    electron: {
+      ipcRenderer: {
+        send(channel: string, data?: any): void;
+        on(channel: string, func: (...args: any[]) => void): void;
+        removeAllListeners(channel: string): void;
+      };
+    };
+  }
+}
 
 interface NotificationItem {
   id: string;
@@ -23,9 +34,9 @@ const App: React.FC = () => {
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
 
   useEffect(() => {
-    writeLog("INFO", "SETUP_IPC_LISTENER");
-    ipcRenderer.on("show-notification", (_, data) => {
-      writeLog("INFO", "NOTIFICATION_RECEIVED", { notification: data });
+    console.log("Setting up IPC listener");
+    window.electron.ipcRenderer.on("show-notification", (data) => {
+      console.log("Received notification:", data);
       const newNotification = {
         id: Date.now().toString(),
         type: data.type,
@@ -38,21 +49,21 @@ const App: React.FC = () => {
     });
 
     return () => {
-      writeLog("INFO", "CLEANUP_IPC_LISTENER");
-      ipcRenderer.removeAllListeners("show-notification");
+      console.log("Cleaning up IPC listener");
+      window.electron.ipcRenderer.removeAllListeners("show-notification");
     };
   }, []);
 
   const removeNotification = (id: string) => {
-    writeLog("INFO", "REMOVE_NOTIFICATION", { id });
+    console.log("Removing notification:", id);
     setNotifications((prev) => {
       const newNotifications = prev.filter(
         (notification) => notification.id !== id
       );
       // If no notifications left, send event to main process
       if (newNotifications.length === 0) {
-        writeLog("INFO", "NO_NOTIFICATIONS_LEFT");
-        ipcRenderer.send("no-notifications");
+        console.log("No notifications left");
+        window.electron.ipcRenderer.send("no-notifications");
       }
       return newNotifications;
     });

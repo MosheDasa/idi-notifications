@@ -1,6 +1,7 @@
-import { writeLog } from "./logger";
 import * as dotenv from "dotenv";
-interface Config {
+import { writeLog } from "./logger";
+
+export interface Config {
   userId: string;
   logLevel: string;
   logDirectory: string;
@@ -13,19 +14,26 @@ export function loadConfig(): Config {
     return config;
   }
 
-  const userId = "97254"; //process.env.USER_ID;
-  if (!userId) {
-    console.error("USER_ID environment variable is not set");
+  try {
+    // Load environment variables
+    dotenv.config();
+
+    const userId = "97254"; // Hardcoded for now, should be replaced with process.env.USER_ID
+    if (!userId) {
+      throw new Error("USER_ID environment variable is not set");
+    }
+
+    config = {
+      userId,
+      logLevel: process.env.LOG_LEVEL || "info",
+      logDirectory: process.env.LOG_DIRECTORY || "logs",
+    };
+
+    return config;
+  } catch (error) {
+    console.error("Failed to load configuration:", error);
     process.exit(1);
   }
-
-  config = {
-    userId,
-    logLevel: process.env.LOG_LEVEL || "info",
-    logDirectory: process.env.LOG_DIRECTORY || "logs",
-  };
-
-  return config;
 }
 
 export function getConfig(): Config {

@@ -6,10 +6,20 @@ import {
   getNotificationWindow,
 } from "./window-manager";
 
+export interface Notification {
+  id: string;
+  type: "INFO" | "ERROR" | "COINS" | "FREE_HTML" | "URL_HTML";
+  message: string;
+  isPermanent?: boolean;
+  displayTime?: number;
+  amount?: number;
+}
+
 let ws: WebSocket | null = null;
 let lastNotificationId: string | null = null;
+let pingInterval: NodeJS.Timeout | null = null;
 
-export function connectWebSocket(userId: string) {
+export function connectWebSocket(userId: string): void {
   if (ws) {
     try {
       ws.close();
@@ -24,7 +34,7 @@ export function connectWebSocket(userId: string) {
     ws = new WebSocket(`ws://localhost:3001?userId=${userId}`);
 
     // Set up ping/pong manually
-    const pingInterval = setInterval(() => {
+    pingInterval = setInterval(() => {
       if (ws?.readyState === WebSocket.OPEN) {
         ws.ping();
       }
@@ -47,7 +57,7 @@ export function connectWebSocket(userId: string) {
 
     ws.on("message", (data: WebSocket.Data) => {
       try {
-        const notification = JSON.parse(data.toString());
+        const notification = JSON.parse(data.toString()) as Notification;
         writeLog("DEBUG", "WEBSOCKET_NOTIFICATION_RECEIVED", { notification });
 
         // Play notification sound
@@ -105,7 +115,10 @@ export function connectWebSocket(userId: string) {
 
     ws.on("close", () => {
       writeLog("INFO", "WEBSOCKET_CLOSED");
-      clearInterval(pingInterval);
+      if (pingInterval) {
+        clearInterval(pingInterval);
+        pingInterval = null;
+      }
       // Try to reconnect after 5 seconds
       setTimeout(() => connectWebSocket(userId), 5000);
     });

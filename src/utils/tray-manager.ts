@@ -14,10 +14,17 @@ const { version: APP_VERSION } = require("../../package.json");
 
 export function createTray(): Tray {
   try {
-    // Create base tray icon using ICO file
-    const iconPath = path.join(process.cwd(), "src/assets/icon.ico");
+    // Create base tray icon using disconnected state PNG
+    const iconPath = path.join(
+      process.cwd(),
+      "src/assets/icon-disconnected.png"
+    );
     writeLog("DEBUG", "LOADING_TRAY_ICON", { path: iconPath });
-    tray = new Tray(iconPath);
+
+    const icon = nativeImage
+      .createFromPath(iconPath)
+      .resize({ width: 160, height: 160 });
+    tray = new Tray(icon);
 
     // Set initial tooltip
     tray.setToolTip("IDI Notifications - Disconnected");
@@ -112,6 +119,14 @@ export function updateConnectionStatus(connected: boolean): void {
     tray.setToolTip(
       `IDI Notifications - ${connected ? "Connected" : "Disconnected"}`
     );
+
+    // Update icon based on connection status
+    const iconName = connected ? "icon-connected.png" : "icon-disconnected.png";
+    const iconPath = path.join(process.cwd(), "src/assets", iconName);
+    const icon = nativeImage
+      .createFromPath(iconPath)
+      .resize({ width: 160, height: 160 });
+    tray.setImage(icon);
 
     // Update context menu with new status
     updateContextMenu(connected);

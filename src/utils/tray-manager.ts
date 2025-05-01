@@ -1,4 +1,4 @@
-import { Tray, Menu, nativeImage, dialog } from "electron";
+import { Tray, Menu, nativeImage, dialog, app } from "electron";
 import * as path from "path";
 import { writeLog } from "./logger";
 import { getWebSocket } from "./socket-manager";
@@ -12,14 +12,27 @@ let isConnected = false;
 // Read version from package.json
 const { version: APP_VERSION } = require("../../package.json");
 
+function getIconPath(iconName: string): string {
+  // In development, use the src/assets directory
+  if (!app.isPackaged) {
+    return path.join(process.cwd(), "src/assets", iconName);
+  }
+
+  // In production, use the resources/assets directory
+  return path.join(process.resourcesPath, "assets", iconName);
+}
+
 export function createTray(): Tray {
   try {
     // Create base tray icon using disconnected state PNG
-    const iconPath = path.join(
-      process.cwd(),
-      "src/assets/icon-disconnected.png"
-    );
-    writeLog("DEBUG", "LOADING_TRAY_ICON", { path: iconPath });
+    const iconPath = getIconPath("icon-disconnected.png");
+    writeLog("DEBUG", "LOADING_TRAY_ICON", {
+      path: iconPath,
+      isPackaged: app.isPackaged,
+      resourcesPath: process.resourcesPath,
+      cwd: process.cwd(),
+      execPath: process.execPath,
+    });
 
     const icon = nativeImage
       .createFromPath(iconPath)
@@ -37,6 +50,11 @@ export function createTray(): Tray {
   } catch (error) {
     writeLog("ERROR", "TRAY_CREATION_ERROR", {
       error: error instanceof Error ? error.message : String(error),
+      iconPath: getIconPath("icon-disconnected.png"),
+      isPackaged: app.isPackaged,
+      resourcesPath: process.resourcesPath,
+      cwd: process.cwd(),
+      execPath: process.execPath,
     });
     throw error;
   }
@@ -122,7 +140,15 @@ export function updateConnectionStatus(connected: boolean): void {
 
     // Update icon based on connection status
     const iconName = connected ? "icon-connected.png" : "icon-disconnected.png";
-    const iconPath = path.join(process.cwd(), "src/assets", iconName);
+    const iconPath = getIconPath(iconName);
+    writeLog("DEBUG", "UPDATING_TRAY_ICON", {
+      path: iconPath,
+      isPackaged: app.isPackaged,
+      resourcesPath: process.resourcesPath,
+      cwd: process.cwd(),
+      execPath: process.execPath,
+    });
+
     const icon = nativeImage
       .createFromPath(iconPath)
       .resize({ width: 160, height: 160 });
@@ -135,6 +161,13 @@ export function updateConnectionStatus(connected: boolean): void {
   } catch (error) {
     writeLog("ERROR", "TRAY_STATUS_UPDATE_ERROR", {
       error: error instanceof Error ? error.message : String(error),
+      iconPath: getIconPath(
+        connected ? "icon-connected.png" : "icon-disconnected.png"
+      ),
+      isPackaged: app.isPackaged,
+      resourcesPath: process.resourcesPath,
+      cwd: process.cwd(),
+      execPath: process.execPath,
     });
   }
 }

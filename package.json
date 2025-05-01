@@ -1,6 +1,6 @@
 {
   "name": "idi-notifications",
-  "version": "16.0.2",
+  "version": "16.0.4",
   "description": "Windows notification application using Electron",
   "author": "IDI",
   "main": "dist/main.js",
@@ -15,7 +15,8 @@
     "pack": "electron-builder --dir",
     "dist": "electron-builder",
     "dist:win": "electron-builder --win",
-    "prod": "npm run clean && npm run build && npm run dist:win"
+    "version:patch": "npm version patch --no-git-tag-version",
+    "prod": "npm run version:patch && npm run clean && npm run build && npm run dist:win"
   },
   "dependencies": {
     "@types/jimp": "^0.2.1",

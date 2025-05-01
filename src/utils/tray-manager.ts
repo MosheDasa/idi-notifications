@@ -1,8 +1,8 @@
-import { Tray, Menu, nativeImage, dialog, app } from "electron";
+import { Tray, Menu, nativeImage, dialog, app, shell } from "electron";
 import * as path from "path";
 import { writeLog } from "./logger";
 import { getWebSocket } from "./socket-manager";
-import { loadConfig } from "./config-manager";
+import { loadConfig, getConfigPath } from "./config-manager";
 import { getNotificationWindow } from "./window-manager";
 import { playSound } from "./sound";
 
@@ -60,9 +60,10 @@ export function createTray(): Tray {
   }
 }
 
-function showAboutDialog() {
+async function showAboutDialog() {
   const config = loadConfig();
-  dialog.showMessageBox({
+  const configPath = getConfigPath();
+  const result = await dialog.showMessageBox({
     type: "info",
     title: "About IDI Notifications",
     message: "IDI Notifications",
@@ -73,9 +74,19 @@ Connection Status: ${isConnected ? "Connected" : "Disconnected"}
 Configuration:
 API URL: ${config.API_URL}
 API Polling Interval: ${config.API_POLLING_INTERVAL}ms
-Logging Enabled: ${config.LOG ? "Yes" : "No"}`,
-    buttons: ["OK"],
+Logging Enabled: ${config.LOG ? "Yes" : "No"}
+Config Path: ${configPath}`,
+    buttons: ["Open Config Folder", "OK"],
   });
+
+  if (result.response === 0) {
+    // Edit Config clicked
+    // ... existing edit config code ...
+  } else if (result.response === 1) {
+    // Open Config Folder clicked
+    const configDir = path.dirname(configPath);
+    shell.openPath(configDir);
+  }
 }
 
 function sendTestNotification() {

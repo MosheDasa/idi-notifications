@@ -17,7 +17,7 @@ const DEFAULT_CONFIG: Config = {
   userId: "97254",
 };
 
-function getConfigPath(): string {
+export function getConfigPath(): string {
   return path.join(
     process.env.USERPROFILE || "",
     "idi-notifications-config",

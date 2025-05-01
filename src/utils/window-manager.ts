@@ -1,9 +1,19 @@
-import { BrowserWindow, screen } from "electron";
+import { BrowserWindow, screen, app } from "electron";
 import * as path from "path";
 import { writeLog } from "./logger";
 import { setNotificationWindow } from "./sound";
 
 let notificationWindow: BrowserWindow | null = null;
+
+function getIndexHtmlPath(): string {
+  // In development, use the dist directory in the project root
+  if (!app.isPackaged) {
+    return path.join(process.cwd(), "dist/index.html");
+  }
+
+  // In production, use the resources directory
+  return path.join(process.resourcesPath, "dist/index.html");
+}
 
 export function createNotificationWindow(): BrowserWindow {
   try {
@@ -22,7 +32,7 @@ export function createNotificationWindow(): BrowserWindow {
       webPreferences: {
         nodeIntegration: true,
         contextIsolation: false,
-        devTools: false,
+        devTools: !app.isPackaged,
       },
     });
 
@@ -30,9 +40,25 @@ export function createNotificationWindow(): BrowserWindow {
     setNotificationWindow(notificationWindow);
 
     // Load index.html
-    const indexPath = path.join(process.cwd(), "dist/index.html");
-    writeLog("DEBUG", "LOADING_INDEX_HTML", { path: indexPath });
-    notificationWindow.loadFile(indexPath);
+    const indexPath = getIndexHtmlPath();
+    writeLog("DEBUG", "LOADING_INDEX_HTML", {
+      path: indexPath,
+      isPackaged: app.isPackaged,
+      resourcesPath: process.resourcesPath,
+      cwd: process.cwd(),
+      execPath: process.execPath,
+    });
+
+    notificationWindow.loadFile(indexPath).catch((error) => {
+      writeLog("ERROR", "WINDOW_LOAD_ERROR", {
+        error: error instanceof Error ? error.message : String(error),
+        path: indexPath,
+        isPackaged: app.isPackaged,
+        resourcesPath: process.resourcesPath,
+        cwd: process.cwd(),
+        execPath: process.execPath,
+      });
+    });
 
     notificationWindow.once("ready-to-show", () => {
       if (notificationWindow) {
@@ -55,6 +81,10 @@ export function createNotificationWindow(): BrowserWindow {
           errorCode,
           errorDescription,
           path: indexPath,
+          isPackaged: app.isPackaged,
+          resourcesPath: process.resourcesPath,
+          cwd: process.cwd(),
+          execPath: process.execPath,
         });
       }
     );

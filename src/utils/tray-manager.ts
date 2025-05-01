@@ -68,6 +68,7 @@ async function showAboutDialog() {
     title: "About IDI Notifications",
     message: "IDI Notifications",
     detail: `Version: ${APP_VERSION}
+Mode: ${app.isPackaged ? "Production" : "Development"}
 User ID: ${config.userId}
 Connection Status: ${isConnected ? "Connected" : "Disconnected"}
 
@@ -76,16 +77,17 @@ API URL: ${config.API_URL}
 API Polling Interval: ${config.API_POLLING_INTERVAL}ms
 Logging Enabled: ${config.LOG ? "Yes" : "No"}
 Config Path: ${configPath}`,
-    buttons: ["Open Config Folder", "OK"],
+    buttons: ["Open Config Folder", "Restart", "OK"],
   });
 
   if (result.response === 0) {
-    // Edit Config clicked
-    // ... existing edit config code ...
-  } else if (result.response === 1) {
     // Open Config Folder clicked
     const configDir = path.dirname(configPath);
     shell.openPath(configDir);
+  } else if (result.response === 1) {
+    // Restart clicked
+    app.relaunch();
+    app.exit();
   }
 }
 

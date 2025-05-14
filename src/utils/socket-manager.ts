@@ -9,6 +9,9 @@ import {
 import { updateConnectionStatus } from "./tray-manager";
 import { Config } from "./config-manager";
 
+// Disable certificate validation
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+
 export interface Notification {
   id: string;
   type: "INFO" | "ERROR" | "COINS" | "FREE_HTML" | "URL_HTML";
@@ -36,7 +39,7 @@ export function connectWebSocket(userId: string, appConfig: Config): void {
   }
 
   try {
-    const socket = new SockJS("http://localhost:8083/idiwebsocket");
+    const socket = new SockJS(config.API_NOTIFICATIONS_ENDPOINT);
     stompClient = new Client({
       webSocketFactory: () => socket,
       connectHeaders: {
@@ -50,7 +53,7 @@ export function connectWebSocket(userId: string, appConfig: Config): void {
 
     stompClient.onConnect = () => {
       writeLog("INFO", "STOMP_CONNECTED", {
-        url: "http://localhost:8083/idiwebsocket",
+        url: config.API_NOTIFICATIONS_ENDPOINT,
       });
       updateConnectionStatus(true);
 

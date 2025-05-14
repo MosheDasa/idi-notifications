@@ -3,6 +3,7 @@ import { FaInfo } from "react-icons/fa";
 import BaseNotification, {
   BaseNotificationProps,
 } from "../common/BaseNotification";
+import { DasaTest, UnrtButton } from "unrt";
 
 interface InfoNotificationProps
   extends Omit<BaseNotificationProps, "className" | "children"> {
@@ -26,6 +27,8 @@ const InfoNotification: React.FC<InfoNotificationProps> = ({
       id={id}
     >
       <div className="notification-content">
+        <UnrtButton label="Close" variant="secondary" onClick={onClose} />
+        <DasaTest />
         <div className="notification-icon">
           <FaInfo />
         </div>

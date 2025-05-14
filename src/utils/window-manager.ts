@@ -19,11 +19,12 @@ export function createNotificationWindow(): BrowserWindow {
   try {
     writeLog("INFO", "CREATING_NOTIFICATION_WINDOW");
 
-    const { height: screenHeight } = screen.getPrimaryDisplay().workAreaSize;
+    const { height: screenHeight, width: screenWidth } =
+      screen.getPrimaryDisplay().workAreaSize;
 
     notificationWindow = new BrowserWindow({
       width: 400,
-      height: screenHeight,
+      height: 100, // Start with a smaller initial height
       show: false,
       frame: false,
       transparent: true,
@@ -64,8 +65,10 @@ export function createNotificationWindow(): BrowserWindow {
     notificationWindow.once("ready-to-show", () => {
       if (notificationWindow) {
         const { width } = notificationWindow.getBounds();
-        const { width: screenWidth } = screen.getPrimaryDisplay().workAreaSize;
-        notificationWindow.setPosition(screenWidth - width - 20, 0);
+        notificationWindow.setPosition(
+          screenWidth - width - 20,
+          screenHeight - 100
+        ); // Position at bottom right
         notificationWindow.show();
 
         // Make sure the window is visible and interactive

@@ -5,6 +5,7 @@ import { writeLog } from "./logger";
 
 export interface Config {
   API_URL: string;
+  API_NOTIFICATIONS_ENDPOINT: string;
   API_POLLING_INTERVAL: number;
   LOG: boolean;
   USER_ID: string;
@@ -12,13 +13,31 @@ export interface Config {
   OPEN_DEV_TOOLS: boolean;
 }
 
+// Get environment variables with fallbacks
+function getEnvVar(key: string, defaultValue: string): string {
+  return process.env[`VITE_${key}`] || defaultValue;
+}
+
+function getEnvVarBool(key: string, defaultValue: boolean): boolean {
+  const value = process.env[`VITE_${key}`];
+  if (value === undefined) return defaultValue;
+  return value.toLowerCase() === 'true';
+}
+
+function getEnvVarNumber(key: string, defaultValue: number): number {
+  const value = process.env[`VITE_${key}`];
+  if (value === undefined) return defaultValue;
+  return parseInt(value, 10) || defaultValue;
+}
+
 const DEFAULT_CONFIG: Config = {
-  API_URL: "http://localhost:3001/notifications/check",
-  API_POLLING_INTERVAL: 10000,
-  LOG: true,
+  API_URL: getEnvVar("API_URL", "http://localhost:3001/notifications/check"),
+  API_NOTIFICATIONS_ENDPOINT: getEnvVar("API_NOTIFICATIONS_ENDPOINT", "http://localhost:8083/idiwebsocket"),
+  API_POLLING_INTERVAL: getEnvVarNumber("API_POLLING_INTERVAL", 10000),
+  LOG: getEnvVarBool("LOG", true),
   USER_ID: "97254",
   USER_NAME: "97254",
-  OPEN_DEV_TOOLS: false,
+  OPEN_DEV_TOOLS: getEnvVarBool("OPEN_DEV_TOOLS", false),
 };
 
 export function getConfigPath(): string {

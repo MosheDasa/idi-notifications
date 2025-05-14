@@ -11,6 +11,9 @@ import {
 } from "./utils/window-manager";
 import { createTray } from "./utils/tray-manager";
 
+// Load environment configuration based on NODE_ENV
+require("../config/env-loader");
+
 // Load configuration first
 const config = loadConfig();
 
@@ -18,7 +21,7 @@ const config = loadConfig();
 initLogger(config.LOG);
 
 // Now we can safely write logs
-writeLog("INFO", "APP_STARTING", { config });
+writeLog("INFO", "APP_STARTING", { config, environment: process.env.NODE_ENV || "development" });
 
 // Prevent multiple instances
 const gotTheLock = app.requestSingleInstanceLock();

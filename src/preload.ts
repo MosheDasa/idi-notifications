@@ -7,7 +7,7 @@ contextBridge.exposeInMainWorld("electron", {
   ipcRenderer: {
     send: (channel: string, data: any) => {
       // whitelist channels
-      const validChannels = ["no-notifications"];
+      const validChannels = ["no-notifications", "enable-mouse-events", "disable-mouse-events"];
       if (validChannels.includes(channel)) {
         ipcRenderer.send(channel, data);
       }

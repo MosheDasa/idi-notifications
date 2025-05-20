@@ -1,4 +1,4 @@
-import { BrowserWindow, screen, app } from "electron";
+import { BrowserWindow, screen, app, ipcMain } from "electron";
 import * as path from "path";
 import { writeLog } from "./logger";
 import { setNotificationWindow } from "./sound";
@@ -37,6 +37,10 @@ export function createNotificationWindow(): BrowserWindow {
         preload: path.join(__dirname, "preload.js"),
       },
     });
+
+    // Configure the window to ignore mouse events except on specific elements
+    // This is a simpler way to make the window click-through except for notifications
+    notificationWindow.setIgnoreMouseEvents(true, { forward: true });
 
     // Set the notification window
     setNotificationWindow(notificationWindow);
@@ -105,25 +109,36 @@ export function createNotificationWindow(): BrowserWindow {
     // Wait for window to be fully loaded before setting up mouse events
     notificationWindow.webContents.once("did-finish-load", () => {
       if (notificationWindow) {
-        // Allow mouse events for the notification container
+        // Add CSS class to elements that should receive mouse events
         notificationWindow.webContents
           .executeJavaScript(
             `
           try {
-            document.body.style.pointerEvents = 'none';
-            const container = document.querySelector('.notification-container');
-            if (container) {
-              container.style.pointerEvents = 'auto';
-              container.style.zIndex = '1000';
-              // Make sure close button is clickable
-              const closeButtons = container.querySelectorAll('.close-button');
-              closeButtons.forEach(button => {
-                button.style.pointerEvents = 'auto';
-                button.style.zIndex = '1001';
-              });
-            }
+            // Add a class to all notifications for the mouseenterleave handler
+            const style = document.createElement('style');
+            style.textContent = '.notification { -webkit-app-region: no-drag; }';
+            document.head.appendChild(style);
+            
+            // Set up event listeners to toggle ignoreMouseEvents
+            document.addEventListener('mouseenter', (e) => {
+              // Check if mouse is over a notification
+              if (e.target.closest('.notification')) {
+                // Tell the main process to start accepting mouse events
+                window.electron.ipcRenderer.send('enable-mouse-events');
+              }
+            }, true);
+            
+            document.addEventListener('mouseleave', (e) => {
+              // Check if we're leaving a notification
+              if (e.target.closest('.notification')) {
+                // Tell the main process to stop accepting mouse events
+                window.electron.ipcRenderer.send('disable-mouse-events');
+              }
+            }, true);
+            
+            console.log('Set up mouse event handling for notifications');
           } catch (error) {
-            console.error('Error setting pointer events:', error);
+            console.error('Error setting up mouse events:', error);
           }
         `
           )
@@ -135,6 +150,9 @@ export function createNotificationWindow(): BrowserWindow {
       }
     });
 
+    // Set up IPC handlers for mouse events
+    setupMouseEventHandlers();
+
     return notificationWindow;
   } catch (error) {
     writeLog("ERROR", "NOTIFICATION_WINDOW_CREATION_ERROR", {
@@ -142,6 +160,27 @@ export function createNotificationWindow(): BrowserWindow {
     });
     throw error;
   }
+}
+
+// Set up IPC handlers for mouse events
+function setupMouseEventHandlers() {
+  // Clean up any existing listeners
+  ipcMain.removeAllListeners('enable-mouse-events');
+  ipcMain.removeAllListeners('disable-mouse-events');
+  
+  // Handle enabling mouse events (when hovering over a notification)
+  ipcMain.on('enable-mouse-events', () => {
+    if (notificationWindow) {
+      notificationWindow.setIgnoreMouseEvents(false);
+    }
+  });
+  
+  // Handle disabling mouse events (when leaving a notification)
+  ipcMain.on('disable-mouse-events', () => {
+    if (notificationWindow) {
+      notificationWindow.setIgnoreMouseEvents(true, { forward: true });
+    }
+  });
 }
 
 export function getNotificationWindow(): BrowserWindow | null {

@@ -3,11 +3,19 @@ import { writeLog } from "./utils/logger";
 
 // Expose protected methods that allow the renderer process to use
 // the ipcRenderer without exposing the entire object
-contextBridge.exposeInMainWorld("electron", {
+contextBridge.exposeInMainWorld("electronAPI", {
+  openConfigFolder: () => ipcRenderer.send("open-config-folder"),
+  restartApp: () => ipcRenderer.send("restart-app"),
   ipcRenderer: {
-    send: (channel: string, data: any) => {
+    send: (channel: string, data?: any) => {
       // whitelist channels
-      const validChannels = ["no-notifications", "enable-mouse-events", "disable-mouse-events"];
+      const validChannels = [
+        "no-notifications", 
+        "enable-mouse-events", 
+        "disable-mouse-events",
+        "open-config-folder",
+        "restart-app"
+      ];
       if (validChannels.includes(channel)) {
         ipcRenderer.send(channel, data);
       }
